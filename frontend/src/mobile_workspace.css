@@ -1,0 +1,67 @@
+/* Mobile Workday v1. Desktop tables keep their columns; phones get task cards. */
+.team-assignments { min-width: 0; }
+.team-desktop-table .data-table { min-width: 1120px; table-layout: auto; }
+.team-desktop-table .data-table th,
+.team-desktop-table .data-table td { min-width: 130px; word-break: normal; overflow-wrap: break-word; }
+.team-desktop-table .data-table th:first-child,
+.team-desktop-table .data-table td:first-child { min-width: 180px; }
+.team-mobile-list { display: none; }
+.team-pagination { align-items: center; justify-content: space-between; gap: .5rem; margin-top: 1rem; }
+.team-filters label { min-width: 0; }
+
+@media (max-width: 860px) {
+  .team-desktop-table { display: none; }
+  .team-mobile-list { display: grid; gap: 1rem; list-style: none; padding: 0; margin: 0; }
+  .team-mobile-card { min-width: 0; padding: 1rem; border: 1px solid #dce3ed; border-radius: 14px; background: #fff; }
+  .team-card-heading { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .team-card-heading h3 { margin: 0; font-size: 1.05rem; line-height: 1.45; overflow-wrap: anywhere; }
+  .team-card-heading .task-status-pill { font-size: .72rem; white-space: normal; }
+  .team-card-heading [data-status="COMPLETED"] { color: #067647; background: #ecfdf3; }
+  .team-card-heading [data-status="OVERDUE"],
+  .team-card-heading [data-status="COMPLETED_LATE"] { color: #934f00; background: #fff8e6; }
+  .team-assignee { display: grid; gap: .15rem; margin: .9rem 0; overflow-wrap: anywhere; }
+  .team-assignee span, .team-field-label, .team-dates dt, .team-card-details dt { color: #667085; font-size: .8rem; }
+  .team-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin: 0 0 .9rem; }
+  .team-dates dd, .team-card-details dd { margin: .25rem 0 0; font-size: .9rem; line-height: 1.5; overflow-wrap: anywhere; }
+  .team-progress { padding: .8rem; border-radius: 10px; background: #f4f6fb; overflow-wrap: anywhere; }
+  .team-progress p { margin: .25rem 0; font-size: .95rem; line-height: 1.5; }
+  .team-progress small { color: #667085; line-height: 1.5; }
+  .team-card-details { margin-top: .45rem; }
+  .team-card-details summary { display: list-item; min-height: 48px; padding: .9rem .2rem; cursor: pointer; color: #245dee; font-weight: 600; font-size: .85rem; }
+  .team-card-details dl { display: grid; gap: .75rem; margin: 0 0 1rem; }
+  .team-card-details small { display: block; overflow-wrap: anywhere; }
+  .team-activity-button { width: 100%; min-height: 48px; }
+  .team-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .team-search, .team-status-filter { grid-column: 1 / -1; }
+}
+
+@media (max-width: 650px) {
+  .content-shell, .main-content, .page, .panel { min-width: 0; max-width: 100%; }
+  .page { padding: .85rem; }
+  .panel { padding: .9rem; }
+  .topbar { gap: .4rem; min-height: 60px; }
+  .topbar-title { min-width: 0; font-size: .88rem; }
+  .topbar-actions { flex-shrink: 0; gap: .35rem; }
+  .page-header h1 { font-size: 1.7rem; }
+  .panel-header h2 { font-size: 1.2rem; }
+  .primary-button, .secondary-button, .icon-button { min-height: 48px; }
+  .icon-button { min-width: 48px; }
+  .action-strip > button { white-space: normal; }
+  input, select, textarea { min-width: 0; font-size: 16px; }
+  .table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+  .table-scroll .data-table { min-width: 720px; table-layout: auto; }
+  .table-scroll .data-table th, .table-scroll .data-table td { min-width: 110px; overflow-wrap: break-word; word-break: normal; }
+  .team-assignments { box-shadow: none; }
+  .team-assignments .panel-header > button { align-self: stretch; }
+  .team-pagination > span { font-size: .8rem; text-align: center; }
+  .team-pagination > button { padding-left: .7rem; padding-right: .7rem; }
+}
+@media (max-width: 350px) {
+  .team-dates, .team-filters { grid-template-columns: 1fr; }
+}
+@media print {
+  .team-mobile-list { display: none; }
+  .team-desktop-table { display: block; overflow: visible; }
+  .team-desktop-table .data-table { min-width: 0; }
+  .team-desktop-table .data-table th, .team-desktop-table .data-table td { min-width: 0; }
+}

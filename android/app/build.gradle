@@ -1,0 +1,45 @@
+plugins { id 'com.android.application' }
+
+// Keep source/test builds possible before the owner's Firebase client file is supplied.
+// A distributable notification-enabled APK must have the matching google-services.json.
+if (file('google-services.json').exists()) { apply plugin: 'com.google.gms.google-services' }
+
+android {
+    namespace 'in.sandssoftware.workforce'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'in.sandssoftware.workforce'
+        minSdk 26
+        targetSdk 36
+        versionCode 4
+        versionName '1.2.0-pilot'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.pilot'; versionNameSuffix '-debug' }
+        release { minifyEnabled false }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildFeatures { buildConfig true }
+    testOptions { unitTests.returnDefaultValues = true }
+}
+dependencies {
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation platform('com.google.firebase:firebase-bom:34.19.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250517'
+}
+
+tasks.register('verifyPushConfiguration') {
+    doLast {
+        if (!file('google-services.json').exists()) {
+            throw new GradleException('Add the Firebase Android client google-services.json in app/ before building an APK. Use package in.sandssoftware.workforce.pilot for the pilot. Never use a service-account private key here.')
+        }
+    }
+}
+tasks.configureEach {
+    if (name.startsWith('assemble') || name == 'bundleDebug' || name == 'bundleRelease') {
+        dependsOn 'verifyPushConfiguration'
+    }
+}

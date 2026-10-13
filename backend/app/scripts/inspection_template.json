@@ -1,0 +1,382 @@
+{
+  "code": "SHOP_VENDOR_CHECKING_LIST",
+  "title": "Shop / Vendor Checking List",
+  "version": 1,
+  "sections": [
+    {
+      "id": "stock",
+      "number": 1,
+      "title": "STOCK",
+      "questions": [
+        {
+          "id": "stock_physical_verification",
+          "label": "Physical Stock Verification & Tally with the sale sheet / Cash in hand",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Discrepancy / remarks"
+        },
+        {
+          "id": "stock_excise_book",
+          "label": "Excise Book Verification",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO"
+        },
+        {
+          "id": "stock_discrepancy",
+          "label": "Any Discrepancy",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Mention discrepancy"
+        },
+        {
+          "id": "stock_received_in_time",
+          "label": "Vendor is receiving the stock in time",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Reason / observation"
+        },
+        {
+          "id": "stock_old_stock",
+          "label": "Any old stock lying in Shop or Godown",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_label": "Mention old stock details"
+        },
+        {
+          "id": "stock_retail_parcel_observation",
+          "label": "Observation on Retail Sales and Parcel",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "ALWAYS",
+          "detail_label": "Observation"
+        },
+        {
+          "id": "stock_sale_sheet_on_time",
+          "label": "Is the sale sheet reaching the HO on time?",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_required_when": "NO",
+          "detail_label": "Reason for delay"
+        }
+      ]
+    },
+    {
+      "id": "maintenance",
+      "number": 2,
+      "title": "MAINTENANCE",
+      "questions": [
+        {
+          "id": "maintenance_rent_paid",
+          "label": "Rent - Paid / Pending",
+          "type": "YES_NO",
+          "required": true,
+          "yes_label": "Paid",
+          "no_label": "Pending",
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Pending details"
+        },
+        {
+          "id": "maintenance_rent_renewal",
+          "label": "Rent - Renewal",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Renewal details"
+        },
+        {
+          "id": "maintenance_electricity_bill",
+          "label": "Electricity Bill Verification",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO"
+        },
+        {
+          "id": "maintenance_cleanliness",
+          "label": "Cleanliness",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO"
+        },
+        {
+          "id": "maintenance_shop_appearance",
+          "label": "Appearance of the Shop - Any Marketing Help",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "ALWAYS",
+          "detail_label": "Marketing help / observation"
+        },
+        {
+          "id": "maintenance_registers",
+          "label": "All registers maintained at shop as per HO instructions - Visitor Book / Sale Sheet / Excise",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Missing / incomplete registers"
+        },
+        {
+          "id": "maintenance_assets_condition",
+          "label": "All assets are in good condition",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Asset issue details"
+        },
+        {
+          "id": "maintenance_cctv",
+          "label": "CCTV is working and recording up to 90 days verified",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "CCTV issue details"
+        },
+        {
+          "id": "maintenance_housekeeping_materials",
+          "label": "House Keeping materials - Status",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "ALWAYS",
+          "detail_label": "Status / requirement"
+        }
+      ]
+    },
+    {
+      "id": "excise_police_legal",
+      "number": 3,
+      "title": "EXCISE / POLICE / LEGAL",
+      "questions": [
+        {
+          "id": "legal_recent_notices",
+          "label": "Any recent Notices",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Notice details"
+        },
+        {
+          "id": "legal_issues",
+          "label": "Issues",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Issue details"
+        }
+      ]
+    },
+    {
+      "id": "vendor_management",
+      "number": 4,
+      "title": "VENDOR MANAGEMENT",
+      "questions": [
+        {
+          "id": "vendor_urgent_issue",
+          "label": "Any issues of Vendor - Need Action - Urgent",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Urgent issue / action required"
+        },
+        {
+          "id": "vendor_behaviour",
+          "label": "Vendor Behaviour satisfactory",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Behaviour issue"
+        },
+        {
+          "id": "vendor_staff_issues",
+          "label": "Staff's issues in the shop",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_label": "Staff issue details"
+        },
+        {
+          "id": "vendor_following_ho",
+          "label": "Is the vendor following all the instructions of HO?",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Instruction not followed"
+        },
+        {
+          "id": "vendor_help_from_ho",
+          "label": "Any help Vendor required from HO?",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "YES",
+          "detail_label": "Help required"
+        }
+      ]
+    },
+    {
+      "id": "cash_management",
+      "number": 5,
+      "title": "CASH MANAGEMENT",
+      "questions": [
+        {
+          "id": "cash_deposit_on_time",
+          "label": "Vendor depositing the Cash in time ",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_required_when": "NO",
+          "detail_label": "Reason for delay"
+        },
+        {
+          "id": "cash_receipts_maintained",
+          "label": "Is the vendor maintaining the receipts of cash properly and reporting the same on time",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Receipt / reporting issue"
+        },
+        {
+          "id": "cash_ho_issue_clarified",
+          "label": "Check with the HO for any issue on the above and clarify with vendor",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "ALWAYS",
+          "detail_label": "Clarification / observation"
+        }
+      ]
+    },
+    {
+      "id": "location",
+      "number": 6,
+      "title": "LOCATION",
+      "questions": [
+        {
+          "id": "location_change_needed",
+          "label": "Need Location Change",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Reason"
+        },
+        {
+          "id": "vendor_change_needed",
+          "label": "Need Vendor Change",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "YES",
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Reason"
+        }
+      ]
+    },
+    {
+      "id": "parcel_sales_management",
+      "number": 7,
+      "title": "PARCEL SALES MANAGEMENT",
+      "questions": [
+        {
+          "id": "parcel_vendor_details_shared",
+          "label": "Is Vendor maintaining the details and sharing the same with HO on regular Parcel Vendors?",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Missing details"
+        },
+        {
+          "id": "parcel_format_prescribed",
+          "label": "The details are maintained in the format prescribed by HO?",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO"
+        },
+        {
+          "id": "parcel_new_vendor",
+          "label": "Any new addition of Parcel Vendor?",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Mention details"
+        }
+      ]
+    },
+    {
+      "id": "inspection_report",
+      "number": 8,
+      "title": "INSPECTION REPORT",
+      "questions": [
+        {
+          "id": "inspection_satisfactory",
+          "label": "Satisfactory",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO"
+        },
+        {
+          "id": "inspection_unsatisfactory_reason",
+          "label": "If No - Reason",
+          "type": "CONDITIONAL_TEXT",
+          "depends_on": "inspection_satisfactory",
+          "depends_value": "NO",
+          "required_when_visible": true
+        },
+        {
+          "id": "inspection_previous_instruction_implemented",
+          "label": "Any instruction given at the time of previous visit - is implemented?",
+          "type": "YES_NO",
+          "required": true,
+          "risk_when": "NO",
+          "detail_when": "NO",
+          "detail_label": "Pending instruction"
+        },
+        {
+          "id": "inspection_sales_recommendation",
+          "label": "Any recommendation to improve the sales?",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Recommendation"
+        },
+        {
+          "id": "inspection_other_recommendation",
+          "label": "Any other recommendation - Please specify",
+          "type": "YES_NO",
+          "required": true,
+          "detail_when": "YES",
+          "detail_required_when": "YES",
+          "detail_label": "Recommendation"
+        }
+      ]
+    }
+  ]
+}
