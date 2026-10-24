@@ -1,3 +1,4 @@
+import DateField from "./DateField";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest, uploadWithProgress } from "./lib/api";
 
@@ -251,7 +252,7 @@ function DocumentSelection({
             {(type.expiryField || type.extraExpiryKey) && (
               <label>
                 Expiry / Due Date
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={expiryValue}
@@ -1242,7 +1243,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Registration Expiry
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1260,7 +1261,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Insurance Expiry
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1278,7 +1279,7 @@ export default function AssetWorkspace() {
 
               <label>
                 PUC / Emission Expiry
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1447,7 +1448,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Last Tax Paid Date
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1465,7 +1466,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Next Tax Due Date
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1628,7 +1629,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Issue Date
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -1646,7 +1647,7 @@ export default function AssetWorkspace() {
 
               <label>
                 Expiry / Renewal Date
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={
@@ -2105,3 +2106,4 @@ export default function AssetWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

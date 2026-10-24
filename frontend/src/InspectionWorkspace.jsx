@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "./lib/api";
 import { useAuth } from "./context/AuthContext";
@@ -149,7 +151,7 @@ function ChecklistEditor({ report, onReload, onSubmitted }) {
         <span><strong>Shop / Outlet:</strong> {report.outlet_name || "—"}{report.outlet_code ? ` (${report.outlet_code})` : ""}</span>
         <span><strong>Address:</strong> {report.outlet_address || "—"}</span>
         <span><strong>Cluster:</strong> {report.cluster_name || "—"}</span>
-        <span><strong>Inspection:</strong> {new Date(report.inspection_started_at).toLocaleString()}</span>
+        <span><strong>Inspection:</strong> {new Date(report.inspection_started_at).toLocaleString("en-GB",dateOptions({},true))}</span>
         <span><strong>Version:</strong> {report.version}</span>
       </div>
 
@@ -863,7 +865,7 @@ export default function InspectionWorkspace() {
 
             <label>
               Inspection date
-              <input
+              <DateField
                 type="date"
                 min={today}
                 value={rotationForm.scheduled_for}
@@ -1301,7 +1303,7 @@ export default function InspectionWorkspace() {
                     {report.report_number}
                   </strong>
                   <small>
-                    {new Date(report.inspection_started_at).toLocaleString()}
+                    {new Date(report.inspection_started_at).toLocaleString("en-GB",dateOptions({},true))}
                   </small>
                 </span>
 
@@ -1435,3 +1437,4 @@ export default function InspectionWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

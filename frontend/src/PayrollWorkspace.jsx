@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {useLocation} from "react-router-dom";
 import {useAuth} from "./context/AuthContext";
@@ -572,7 +574,7 @@ export default function PayrollWorkspace(){
   async function calculateRun(run){
     setRunFeedback(previous=>({...previous,[run.id]:""}));
     const result=await runAction(
-      `Payroll calculated for ${run.period_start} to ${run.period_end}.`,
+      `Payroll calculated for ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)}.`,
       `/payroll/runs/${run.id}/calculate`,
       undefined,
       text=>setRunFeedback(previous=>({...previous,[run.id]:text}))
@@ -595,7 +597,7 @@ export default function PayrollWorkspace(){
   async function deletePayrollRun(run){
     if(!canDeletePayrollRun(run))return;
     const confirmed=window.confirm(
-      `Delete payroll run ${run.period_start} to ${run.period_end}?\n\n`+
+      `Delete payroll run ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)}?\n\n`+
       "This removes only this draft/calculated payroll run and its calculated employee/vendor rows. Attendance, salary structures and vendor records are not deleted."
     );
     if(!confirmed)return;
@@ -605,7 +607,7 @@ export default function PayrollWorkspace(){
     setMessage("");
     try{
       await apiRequest(`/payroll/runs/${run.id}`,{method:"DELETE"});
-      setMessage(`Payroll run ${run.period_start} to ${run.period_end} deleted.`);
+      setMessage(`Payroll run ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)} deleted.`);
       setRuns(previous=>previous.filter(row=>row.id!==run.id));
       if(selectedRun?.id===run.id){
         setSelectedRun(null);
@@ -624,7 +626,7 @@ export default function PayrollWorkspace(){
 
   async function submitForApproval(run){
     const note=window.prompt(
-      `Submit payroll for ${run.period_start} to ${run.period_end} to MD for approval?\n\nSubmission note (optional):`,
+      `Submit payroll for ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)} to MD for approval?\n\nSubmission note (optional):`,
       run.submission_note||""
     );
     if(note===null)return;
@@ -639,7 +641,7 @@ export default function PayrollWorkspace(){
   async function approveRun(run){
     if(!isMD){setError("Only an MD can approve and finalize payroll.");return;}
     const note=window.prompt(
-      `Approve and finalize payroll for ${run.period_start} to ${run.period_end}?\n\nMD approval note (optional):`,
+      `Approve and finalize payroll for ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)}?\n\nMD approval note (optional):`,
       run.approval_note||""
     );
     if(note===null)return;
@@ -655,7 +657,7 @@ export default function PayrollWorkspace(){
   async function returnRun(run){
     if(!isMD){setError("Only an MD can return payroll for correction.");return;}
     const reason=window.prompt(
-      `Return payroll for ${run.period_start} to ${run.period_end} for correction.\n\nReason:`,
+      `Return payroll for ${formatDisplayDate(run.period_start)} to ${formatDisplayDate(run.period_end)} for correction.\n\nReason:`,
       run.return_note||""
     );
     if(reason===null)return;
@@ -847,7 +849,7 @@ export default function PayrollWorkspace(){
   }
 
   async function removeVendorClosure(closure){
-    if(!window.confirm(`Remove vendor closure ${closure.closure_date}: ${closure.reason}?`))return;
+    if(!window.confirm(`Remove vendor closure ${formatDisplayDate(closure.closure_date)}: ${closure.reason}?`))return;
     if(lock.current)return;
     lock.current=true;
     setBusy(true);
@@ -995,7 +997,7 @@ export default function PayrollWorkspace(){
           <div class="meta">
             <div><strong>Employee:</strong> ${item.employee_code} — ${item.employee_name}</div>
             <div><strong>Payslip:</strong> ${item.payslip_number}</div>
-            <div><strong>Period:</strong> ${item.period_start} to ${item.period_end}</div>
+            <div><strong>Period:</strong> ${formatDisplayDate(item.period_start)} to ${formatDisplayDate(item.period_end)}</div>
             <div><strong>Currency:</strong> ${item.currency}</div>
           </div>
           <table>
@@ -1203,7 +1205,7 @@ export default function PayrollWorkspace(){
                 Recovered: {money(advance.recovered_amount,advance.currency)}
                 {" · "}Remaining: {money(advance.remaining_amount,advance.currency)}
                 {" · "}Installments: {advance.installments_completed}/{advance.recovery_months}
-                {advance.recovery_start_date?` · Starts ${advance.recovery_start_date}`:""}
+                {advance.recovery_start_date?` · Starts ${formatDisplayDate(advance.recovery_start_date)}`:""}
               </p>
               {advance.decision_note&&<p className="muted">MD note: {advance.decision_note}</p>}
               {advance.disbursement_reference&&<p className="muted">Payment reference: {advance.disbursement_reference}</p>}
@@ -1303,7 +1305,7 @@ export default function PayrollWorkspace(){
               <tbody>
                 {payslips.map(item=>(
                   <tr key={item.id}>
-                    <td>{item.period_start} → {item.period_end}</td>
+                    <td>{formatDisplayDate(item.period_start)} → {formatDisplayDate(item.period_end)}</td>
                     <td>{item.payslip_number}</td>
                     <td>{item.payable_days}</td>
                     <td>{money(item.gross_earned,item.currency)}</td>
@@ -1347,7 +1349,7 @@ export default function PayrollWorkspace(){
             </div>
             <div className="simple-list">
               {pendingApprovalRuns.length===0?<div className="empty-state">No payroll runs are waiting for MD approval.</div>:pendingApprovalRuns.map(run=><article className="subpanel" key={run.id}>
-                <div className="panel-header"><div><strong>{run.period_start} → {run.period_end}</strong><p>Employees: {run.total_employees||0} · Vendors: {run.total_vendors||0} · Net Payable: {money(run.total_net)}</p>{run.submission_note&&<p className="muted">Submission note: {run.submission_note}</p>}</div><Status value={run.status}/></div>
+                <div className="panel-header"><div><strong>{formatDisplayDate(run.period_start)} → {formatDisplayDate(run.period_end)}</strong><p>Employees: {run.total_employees||0} · Vendors: {run.total_vendors||0} · Net Payable: {money(run.total_net)}</p>{run.submission_note&&<p className="muted">Submission note: {run.submission_note}</p>}</div><Status value={run.status}/></div>
                 <div className="header-actions"><button type="button" className="secondary-button" disabled={busy} onClick={()=>openRun(run)}>Review Payroll</button><button type="button" className="primary-button" disabled={busy} onClick={()=>approveRun(run)}>Approve & Finalize</button><button type="button" className="secondary-button danger" disabled={busy} onClick={()=>returnRun(run)}>Return for Correction</button></div>
               </article>)}
             </div>
@@ -1378,7 +1380,7 @@ export default function PayrollWorkspace(){
               <div className="form-grid">
                 <label>
                   Period Start *
-                  <input
+                  <DateField
                     required
                     type="date"
                     disabled={busy}
@@ -1389,7 +1391,7 @@ export default function PayrollWorkspace(){
 
                 <label>
                   Period End *
-                  <input
+                  <DateField
                     required
                     type="date"
                     min={runForm.period_start||undefined}
@@ -1417,7 +1419,7 @@ export default function PayrollWorkspace(){
                     className="link-button"
                     onClick={()=>openRun(run)}
                   >
-                    <strong>{run.period_start} → {run.period_end}</strong>
+                    <strong>{formatDisplayDate(run.period_start)} → {formatDisplayDate(run.period_end)}</strong>
                   </button>
 
                   <Status value={run.status}/>
@@ -1435,7 +1437,7 @@ export default function PayrollWorkspace(){
                 {runFeedback[run.id]&&<div className="error-banner">{runFeedback[run.id]}</div>}
                 {!payrollPeriodEnded(run)&&["DRAFT","CALCULATED","RETURNED"].includes(run.status)&&(
                   <div className="warning-banner">
-                    This payroll period has not ended yet. Calculation and submission are locked until {run.period_end}.
+                    This payroll period has not ended yet. Calculation and submission are locked until {formatDisplayDate(run.period_end)}.
                   </div>
                 )}
                 {run.status==="SUBMITTED_FOR_MD_APPROVAL"&&!isMD&&<div className="success-banner">Waiting for MD approval.</div>}
@@ -1461,7 +1463,7 @@ export default function PayrollWorkspace(){
             <div className="panel-header">
               <div>
                 <span className="eyebrow">Payroll Run</span>
-                <h2>{selectedRun.period_start} → {selectedRun.period_end}</h2>
+                <h2>{formatDisplayDate(selectedRun.period_start)} → {formatDisplayDate(selectedRun.period_end)}</h2>
                 <p>Employee and vendor payroll calculations for the selected run.</p>
               </div>
               <div className="header-actions">
@@ -1489,7 +1491,7 @@ export default function PayrollWorkspace(){
                     <tbody>
                       {workingCalendar.calendar_days.map(day=>(
                         <tr key={day.date}>
-                          <td><strong>{day.date}</strong></td>
+                          <td><strong>{formatDisplayDate(day.date)}</strong></td>
                           <td>{day.weekday}</td>
                           <td><Status value={day.included?"INCLUDED":"EXCLUDED"}/></td>
                           <td>{day.reason}</td>
@@ -1505,7 +1507,7 @@ export default function PayrollWorkspace(){
                     <tbody>
                       {(workingCalendar.vendor_calendar_days||[]).map(day=>(
                         <tr key={`vendor-${day.date}`}>
-                          <td><strong>{day.date}</strong></td>
+                          <td><strong>{formatDisplayDate(day.date)}</strong></td>
                           <td>{day.weekday}</td>
                           <td><Status value={day.included?"INCLUDED":"EXCLUDED"}/></td>
                           <td>{day.reason}</td>
@@ -1663,7 +1665,7 @@ export default function PayrollWorkspace(){
                 <tbody>
                   {structures.map(row=>(
                     <tr key={row.id}>
-                      <td>{row.effective_from}</td>
+                      <td>{formatDisplayDate(row.effective_from)}</td>
                       <td>{money(row.basic_salary,row.currency)}</td>
                       <td>{money(row.hra,row.currency)}</td>
                       <td>{money(row.conveyance_allowance,row.currency)}</td>
@@ -1698,7 +1700,7 @@ export default function PayrollWorkspace(){
               <div className="form-grid">
                 <label>
                   Effective From *
-                  <input
+                  <DateField
                     required
                     type="date"
                     disabled={busy}
@@ -1861,7 +1863,7 @@ export default function PayrollWorkspace(){
             <div className="table-wrap"><table>
               <thead><tr><th>Effective From</th><th>Basic</th><th>HRA</th><th>Conveyance</th><th>Other Allowance</th><th>Daily Rate</th><th>Gross Monthly</th><th>Fixed Deduction</th><th>Net Monthly</th><th>Revision Reason</th></tr></thead>
               <tbody>{vendorStructures.map(row=><tr key={row.id}>
-                <td>{row.effective_from}</td>
+                <td>{formatDisplayDate(row.effective_from)}</td>
                 <td>{money(row.basic_salary,row.currency)}</td>
                 <td>{money(row.hra,row.currency)}</td>
                 <td>{money(row.conveyance_allowance,row.currency)}</td>
@@ -1878,7 +1880,7 @@ export default function PayrollWorkspace(){
           {showVendorSalaryForm&&salaryVendorId&&((!latestVendorStructure&&isAdmin)||(latestVendorStructure&&isMD))&&(
             <form className="document-form" onSubmit={saveVendorSalary}>
               <div className="form-grid">
-                <label>Effective From *<input required type="date" disabled={busy} value={vendorSalaryForm.effective_from} onChange={event=>setVendorSalaryForm({...vendorSalaryForm,effective_from:event.target.value})}/></label>
+                <label>Effective From *<DateField required type="date" disabled={busy} value={vendorSalaryForm.effective_from} onChange={event=>setVendorSalaryForm({...vendorSalaryForm,effective_from:event.target.value})}/></label>
                 <label>Basic Salary *<input required type="number" min="0" step="0.01" disabled={busy} value={vendorSalaryForm.basic_salary} onChange={event=>setVendorSalaryForm({...vendorSalaryForm,basic_salary:event.target.value})}/></label>
                 <label>HRA<input type="number" min="0" step="0.01" disabled={busy} value={vendorSalaryForm.hra} onChange={event=>setVendorSalaryForm({...vendorSalaryForm,hra:event.target.value})}/></label>
                 <label>Conveyance Allowance<input type="number" min="0" step="0.01" disabled={busy} value={vendorSalaryForm.conveyance_allowance} onChange={event=>setVendorSalaryForm({...vendorSalaryForm,conveyance_allowance:event.target.value})}/></label>
@@ -1907,7 +1909,7 @@ export default function PayrollWorkspace(){
           {payrollOperator&&showVendorClosureForm&&(
             <form className="document-form" onSubmit={addVendorClosure}>
               <div className="form-grid">
-                <label>Closure Date *<input required type="date" disabled={busy} value={vendorClosureForm.closure_date} onChange={event=>setVendorClosureForm({...vendorClosureForm,closure_date:event.target.value})}/></label>
+                <label>Closure Date *<DateField required type="date" disabled={busy} value={vendorClosureForm.closure_date} onChange={event=>setVendorClosureForm({...vendorClosureForm,closure_date:event.target.value})}/></label>
                 <label>Government Order / Reason *<input required minLength="3" disabled={busy} value={vendorClosureForm.reason} onChange={event=>setVendorClosureForm({...vendorClosureForm,reason:event.target.value})}/></label>
               </div>
               <button className="primary-button" disabled={busy}>Record Closure</button>
@@ -1916,7 +1918,7 @@ export default function PayrollWorkspace(){
           {vendorClosures.length===0?<div className="empty-state">No government closure dates recorded. All calendar days count for vendor payroll.</div>:(
             <div className="table-wrap"><table>
               <thead><tr><th>Date</th><th>Reason</th><th>Action</th></tr></thead>
-              <tbody>{vendorClosures.map(row=><tr key={row.id}><td><strong>{row.closure_date}</strong></td><td>{row.reason}</td><td>{payrollOperator?<button type="button" className="secondary-button danger" disabled={busy} onClick={()=>removeVendorClosure(row)}>Remove</button>:"—"}</td></tr>)}</tbody>
+              <tbody>{vendorClosures.map(row=><tr key={row.id}><td><strong>{formatDisplayDate(row.closure_date)}</strong></td><td>{row.reason}</td><td>{payrollOperator?<button type="button" className="secondary-button danger" disabled={busy} onClick={()=>removeVendorClosure(row)}>Remove</button>:"—"}</td></tr>)}</tbody>
             </table></div>
           )}
         </section>}
@@ -1964,7 +1966,7 @@ export default function PayrollWorkspace(){
                 </label>
                 <label>
                   Notice Starts *
-                  <input
+                  <DateField
                     required
                     type="date"
                     disabled={busy}
@@ -1974,7 +1976,7 @@ export default function PayrollWorkspace(){
                 </label>
                 <label>
                   Notice Ends *
-                  <input
+                  <DateField
                     required
                     type="date"
                     min={noticeForm.start_date||undefined}
@@ -2010,7 +2012,7 @@ export default function PayrollWorkspace(){
                 <div className="panel-header">
                   <div>
                     <strong>{notice.employee_code} — {notice.employee_name}</strong>
-                    <p>{notice.start_date} → {notice.end_date}</p>
+                    <p>{formatDisplayDate(notice.start_date)} → {formatDisplayDate(notice.end_date)}</p>
                   </div>
                   <Status value={notice.status}/>
                 </div>
@@ -2085,7 +2087,7 @@ export default function PayrollWorkspace(){
 
                 <label>
                   Hold From *
-                  <input
+                  <DateField
                     required
                     type="date"
                     disabled={busy}
@@ -2096,7 +2098,7 @@ export default function PayrollWorkspace(){
 
                 <label>
                   Hold To
-                  <input
+                  <DateField
                     type="date"
                     min={holdForm.hold_from||undefined}
                     disabled={busy}
@@ -2174,3 +2176,4 @@ export default function PayrollWorkspace(){
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

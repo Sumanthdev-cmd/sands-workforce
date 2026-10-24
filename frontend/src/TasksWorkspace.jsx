@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import TeamAssignments from "./TeamAssignments";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -419,9 +421,9 @@ const management =
             {sortedTasks.map(t=><option key={t.id} value={t.id}>{taskLabel(t)}</option>)}
           </select></label>
 
-          <label>Scheduled For *<input required type="date" disabled={busy} value={assignForm.scheduled_for} onChange={e=>setAssignForm({...assignForm,scheduled_for:e.target.value})}/></label>
+          <label>Scheduled For *<DateField required type="date" disabled={busy} value={assignForm.scheduled_for} onChange={e=>setAssignForm({...assignForm,scheduled_for:e.target.value})}/></label>
 
-          <label>Assignment Due At<input type="datetime-local" disabled={busy} value={assignForm.due_at} onChange={e=>setAssignForm({...assignForm,due_at:e.target.value})}/></label>
+          <label>Assignment Due At<DateField type="datetime-local" disabled={busy} value={assignForm.due_at} onChange={e=>setAssignForm({...assignForm,due_at:e.target.value})}/></label>
         </div>
 
         {availabilityLoading&&(
@@ -538,7 +540,7 @@ const management =
             <div className="task-meta-grid">
               <span><small>Priority</small><strong>{row.priority}</strong></span>
               <span><small>Scheduled</small><strong>{row.scheduled_for||"—"}</strong></span>
-              <span><small>Due</small><strong>{row.due_at?new Date(row.due_at).toLocaleString():"—"}</strong></span>
+              <span><small>Due</small><strong>{row.due_at?new Date(row.due_at).toLocaleString("en-GB",dateOptions({},true)):"—"}</strong></span>
             </div>
             <div className="action-strip">
               {canStart&&<button type="button" className="primary-button" disabled={busy} onClick={()=>start(row)}>Start</button>}
@@ -604,7 +606,7 @@ const management =
                 <p>{log.note||"No note provided."}</p>
                 <small>
                   {log.created_at
-                    ?new Date(log.created_at).toLocaleString()
+                    ?new Date(log.created_at).toLocaleString("en-GB",dateOptions({},true))
                     :""}
                 </small>
               </div>
@@ -628,3 +630,4 @@ const management =
     </section>}
   </div>
 }
+// date-display-ddmmyyyy-v1

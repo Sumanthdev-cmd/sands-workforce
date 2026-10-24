@@ -166,6 +166,9 @@ def add_employee(
     current_user: EmployeeCreator,
     database: DatabaseSession,
 ) -> EmployeeResponse:
+    from app.services.employee_numbering import validate_joining, assign_new_code
+    validate_joining(database,current_user.organization_id,payload.date_of_joining)
+    payload.employee_code = assign_new_code(database,current_user.organization_id,payload,current_user.id)
     employee = create_employee(
         database,
         current_user.organization_id,
@@ -184,6 +187,12 @@ def edit_employee(
     current_user: EmployeeUpdater,
     database: DatabaseSession,
 ) -> EmployeeResponse:
+    from app.services.employee_numbering import validate_joining
+    from fastapi import HTTPException
+    validate_joining(database,current_user.organization_id,payload.date_of_joining)
+    existing = load_employee(database,current_user.organization_id,employee_id)
+    if payload.employee_code is not None and payload.employee_code != existing.user.employee_code:
+        raise HTTPException(422,"Employee login codes cannot be changed after creation.")
     employee = update_employee(
         database,
         current_user.organization_id,
@@ -250,3 +259,7 @@ def enable_employee(
         is_active=True,
     )
     return employee_response(employee)
+
+# attendance-grid-update-v1
+
+# manual-employee-code-v1

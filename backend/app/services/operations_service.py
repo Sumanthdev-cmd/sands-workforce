@@ -1,8 +1,9 @@
+from app.services.catalogue_service import catalogue_visible, ensure_not_archived
 from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -263,7 +264,7 @@ def list_vendors(database: Session, *, user: User) -> list[Vendor]:
     return list(
         database.scalars(
             select(Vendor)
-            .where(Vendor.organization_id == user.organization_id)
+            .where(Vendor.organization_id == user.organization_id, catalogue_visible("vendors", "vendor"))
             .order_by(Vendor.name)
         ).all()
     )
@@ -287,7 +288,7 @@ def update_vendor(
         select(Vendor).where(
             Vendor.id == vendor_id,
             Vendor.organization_id == user.organization_id,
-        )
+        ).with_for_update()
     )
 
     if vendor is None:
@@ -296,6 +297,9 @@ def update_vendor(
             detail="Vendor was not found.",
         )
 
+    ensure_not_archived(database, user.organization_id, vendor_id, "vendor")
+    if payload.status == "ACTIVE":
+        database.execute(text("DELETE FROM workforce_catalogue_state WHERE organization_id=:org AND person_id=:id AND kind='vendor' AND archived_at IS NULL"), {"org":user.organization_id,"id":vendor_id})
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(vendor, key, value)
 

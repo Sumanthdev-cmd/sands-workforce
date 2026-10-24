@@ -59,6 +59,7 @@ class Notification(TimestampMixin, Base):
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     recipient = relationship("User")
 
 
@@ -83,3 +84,5 @@ class BackgroundJobExecution(TimestampMixin, Base):
     )
     result_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+# attendance-notifications-cleanup-v1

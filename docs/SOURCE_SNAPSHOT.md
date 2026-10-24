@@ -1,5 +1,9 @@
 # Source snapshot
 
+**Updated 24 October 2026:** The original capture below is now supplemented by
+the [integrated update packages](UPDATES_2026_10_24.md). It is not a new live-server capture.
+
+
 This repository combines the backend and frontend source collected from the
 deployed application on **12 October 2026, 23:43 UTC**, with the latest supplied
 Android Workday source (`1.2.0-pilot`, version code 4).

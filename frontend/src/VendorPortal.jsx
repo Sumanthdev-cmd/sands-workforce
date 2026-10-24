@@ -1,3 +1,4 @@
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {openNativeWorkday} from "./lib/nativeWorkday";
 import {useEffect,useMemo,useRef,useState} from "react";
 import "./VendorPortal.css";
@@ -37,8 +38,8 @@ async function vendorRequest(path,{method="GET",body,token=getToken()}={}){
   return data;
 }
 
-function fmtDate(value){return value?new Date(value).toLocaleString():"—"}
-function fmtDay(value){if(!value)return "—";const d=new Date(`${value}T00:00:00`);return Number.isNaN(d.getTime())?value:d.toLocaleDateString()}
+function fmtDate(value){return value?new Date(value).toLocaleString("en-GB",dateOptions({},true)):"—"}
+function fmtDay(value){if(!value)return "—";const d=new Date(`${value}T00:00:00`);return Number.isNaN(d.getTime())?value:d.toLocaleDateString("en-GB",dateOptions({},false))}
 function money(value,currency="INR"){return `${currency==="INR"?"₹":`${currency} `}${Number(value||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}
 function human(value){return String(value||"—").replaceAll("_"," ")}
 function answerValue(answer){if(answer&&typeof answer==="object")return answer.value??answer.text??"—";return answer??"—"}
@@ -128,7 +129,7 @@ function VendorSalaryAdvance({advances,onChanged}){
       <label>Reason *<textarea required minLength="5" maxLength="5000" rows="3" disabled={busy} value={form.reason} onChange={e=>setForm({...form,reason:e.target.value})}/></label>
       <button className="primary-button" disabled={busy}>{busy?"Submitting…":"Send Request to MD"}</button>
     </form></section>
-    <section className="panel"><h2>My advance requests</h2><div className="vendor-document-list">{advances.length===0?<div className="empty-state">No salary advance requests yet.</div>:advances.map(item=><article key={item.id}><div><span className="outlet-code">{human(item.status)}</span><h3>{money(item.requested_amount,item.currency)}</h3><p>{item.reason}</p><small>Recovery: {money(item.installment_amount,item.currency)} for {item.recovery_months} month(s) · Recovered {money(item.recovered_amount,item.currency)} · Remaining {money(item.remaining_amount,item.currency)}</small>{item.recovery_start_date&&<small> Starts: {item.recovery_start_date}</small>}{item.decision_note&&<small> MD note: {item.decision_note}</small>}</div>{item.status==="PENDING"&&<button className="secondary-button" disabled={busy} onClick={()=>cancel(item)}>Cancel</button>}</article>)}</div></section></div>
+    <section className="panel"><h2>My advance requests</h2><div className="vendor-document-list">{advances.length===0?<div className="empty-state">No salary advance requests yet.</div>:advances.map(item=><article key={item.id}><div><span className="outlet-code">{human(item.status)}</span><h3>{money(item.requested_amount,item.currency)}</h3><p>{item.reason}</p><small>Recovery: {money(item.installment_amount,item.currency)} for {item.recovery_months} month(s) · Recovered {money(item.recovered_amount,item.currency)} · Remaining {money(item.remaining_amount,item.currency)}</small>{item.recovery_start_date&&<small> Starts: {formatDisplayDate(item.recovery_start_date)}</small>}{item.decision_note&&<small> MD note: {item.decision_note}</small>}</div>{item.status==="PENDING"&&<button className="secondary-button" disabled={busy} onClick={()=>cancel(item)}>Cancel</button>}</article>)}</div></section></div>
 }
 
 function InspectionDetail({report,onClose,onResponded}){
@@ -198,3 +199,4 @@ export default function VendorPortal(){
       {tab==="profile"&&<div className="vendor-page"><span className="eyebrow">Account</span><h1>Profile</h1><section className="panel"><div className="vendor-profile-grid"><div><small>Vendor code</small><strong>{me.vendor_code}</strong></div><div><small>Vendor name</small><strong>{me.vendor_name}</strong></div><div><small>Contact person</small><strong>{me.contact_person||"—"}</strong></div><div><small>Email</small><strong>{me.email||"—"}</strong></div><div><small>Phone</small><strong>{me.phone||"—"}</strong></div><div><small>Last login</small><strong>{fmtDate(me.last_login_at)}</strong></div></div></section><PasswordChange onChanged={refreshProfile}/></div>}
     </main>{detail&&<InspectionDetail report={detail} onClose={()=>setDetail(null)} onResponded={afterResponse}/>}</div>
 }
+// date-display-ddmmyyyy-v1

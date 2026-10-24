@@ -1,3 +1,4 @@
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "./lib/api";
@@ -71,7 +72,7 @@ export default function VendorInspectionReview() {
           </div>
           <div>
             <strong>{report.report_number}</strong>
-            <span>{new Date(report.inspection_started_at).toLocaleString()}</span>
+            <span>{new Date(report.inspection_started_at).toLocaleString("en-GB",dateOptions({},true))}</span>
           </div>
         </header>
 
@@ -148,3 +149,4 @@ export default function VendorInspectionReview() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

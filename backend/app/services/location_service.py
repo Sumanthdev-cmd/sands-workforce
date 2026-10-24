@@ -101,6 +101,9 @@ def submit_location_batch(
         live_location.battery_percentage = latest_point.battery_percentage
         live_location.recorded_at = latest_recorded_at
 
+    from app.services.geofence_alerts import check_exit
+    for point, recorded_at in sorted(normalized_points,key=lambda item:item[1]):
+        check_exit(database,user,employee,point,recorded_at)
     device.last_seen_at = datetime.now(timezone.utc)
     database.commit()
 
@@ -136,68 +139,17 @@ def get_own_latest_location(
     return live_location
 
 
-def list_live_locations(
-    database: Session,
-    *,
-    organization_id: UUID,
-) -> list[dict]:
-    """Return latest locations for an organization."""
-
-    rows = database.execute(
-        select(LiveLocation, Employee, User)
-        .join(Employee, LiveLocation.employee_id == Employee.id)
-        .join(User, Employee.user_id == User.id)
-        .where(LiveLocation.organization_id == organization_id)
-        .order_by(LiveLocation.recorded_at.desc())
-    ).all()
-
-    return [
-        {
-            "id": live_location.id,
-            "employee_id": employee.id,
-            "employee_code": user.employee_code,
-            "employee_name": employee.full_name,
-            "device_id": live_location.device_id,
-            "latitude": live_location.latitude,
-            "longitude": live_location.longitude,
-            "accuracy_meters": live_location.accuracy_meters,
-            "speed_mps": live_location.speed_mps,
-            "battery_percentage": live_location.battery_percentage,
-            "recorded_at": live_location.recorded_at,
-            "updated_at": live_location.updated_at,
-        }
-        for live_location, employee, user in rows
-    ]
+def list_live_locations(database: Session, organization_id: UUID) -> list[dict]:
+    from app.services.team_location_service import team_locations
+    return [dict(r, employee_id=r["person_id"], employee_code=r["code"], employee_name=r["name"])
+            for r in team_locations(database, organization_id)
+            if r["kind"] == "Employee" and r["location_status"] == "LIVE"]
 
 
-def list_location_roster(database: Session, *, organization_id: UUID) -> list[dict]:
-    """Return every active employee, including employees with no GPS signal."""
-    rows = database.execute(
-        select(Employee, User, LiveLocation)
-        .join(User, Employee.user_id == User.id)
-        .outerjoin(LiveLocation, LiveLocation.employee_id == Employee.id)
-        .where(
-            Employee.organization_id == organization_id,
-            User.is_active.is_(True),
-        )
-        .order_by(User.employee_code)
-    ).all()
-    return [
-        {
-            "employee_id": employee.id,
-            "employee_code": user.employee_code,
-            "employee_name": employee.full_name,
-            "is_field_employee": employee.is_field_employee,
-            "latitude": location.latitude if location else None,
-            "longitude": location.longitude if location else None,
-            "accuracy_meters": location.accuracy_meters if location else None,
-            "speed_mps": location.speed_mps if location else None,
-            "battery_percentage": location.battery_percentage if location else None,
-            "recorded_at": location.recorded_at if location else None,
-            "updated_at": location.updated_at if location else None,
-        }
-        for employee, user, location in rows
-    ]
+def list_location_roster(database: Session, organization_id: UUID) -> list[dict]:
+    from app.services.team_location_service import team_locations
+    return [dict(r, employee_id=r["person_id"], employee_code=r["code"], employee_name=r["name"])
+            for r in team_locations(database, organization_id) if r["kind"] == "Employee"]
 
 
 def list_location_history(
@@ -246,3 +198,5 @@ def list_location_history(
     )
 
     return list(database.scalars(statement).all())
+
+# attendance-grid-update-v1

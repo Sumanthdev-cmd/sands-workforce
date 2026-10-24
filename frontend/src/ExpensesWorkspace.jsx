@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {useLocation} from "react-router-dom";
 import {useAuth} from "./context/AuthContext";
@@ -271,8 +273,8 @@ export default function ExpensesWorkspace(){
           <label>Title *<input required minLength="3" maxLength="200" disabled={busy} value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
           <label>Origin<input maxLength="200" disabled={busy} value={form.origin} onChange={e=>setForm({...form,origin:e.target.value})}/></label>
           <label>Destination<input maxLength="200" disabled={busy} value={form.destination} onChange={e=>setForm({...form,destination:e.target.value})}/></label>
-          <label>Travel Start {form.claim_type==="TA_DA"?"*":""}<input required={form.claim_type==="TA_DA"} type="date" disabled={busy} value={form.travel_start_date} onChange={e=>setForm({...form,travel_start_date:e.target.value})}/></label>
-          <label>Travel End {form.claim_type==="TA_DA"?"*":""}<input required={form.claim_type==="TA_DA"} type="date" min={form.travel_start_date||undefined} disabled={busy} value={form.travel_end_date} onChange={e=>setForm({...form,travel_end_date:e.target.value})}/></label>
+          <label>Travel Start {form.claim_type==="TA_DA"?"*":""}<DateField required={form.claim_type==="TA_DA"} type="date" disabled={busy} value={form.travel_start_date} onChange={e=>setForm({...form,travel_start_date:e.target.value})}/></label>
+          <label>Travel End {form.claim_type==="TA_DA"?"*":""}<DateField required={form.claim_type==="TA_DA"} type="date" min={form.travel_start_date||undefined} disabled={busy} value={form.travel_end_date} onChange={e=>setForm({...form,travel_end_date:e.target.value})}/></label>
         </div>
 
         <label>Purpose *<textarea required minLength="3" maxLength="5000" rows="3" disabled={busy} value={form.purpose} onChange={e=>setForm({...form,purpose:e.target.value})}/></label>
@@ -290,7 +292,7 @@ export default function ExpensesWorkspace(){
             </div>
 
             <div className="form-grid">
-              <label>Expense Date *<input required type="date" min={dateWindow.min} max={dateWindow.max} disabled={busy} value={item.expense_date} onChange={e=>updateItem(index,{expense_date:e.target.value})}/></label>
+              <label>Expense Date *<DateField required type="date" min={dateWindow.min} max={dateWindow.max} disabled={busy} value={item.expense_date} onChange={e=>updateItem(index,{expense_date:e.target.value})}/></label>
               <label>Category *<select required disabled={busy} value={item.category} onChange={e=>updateItem(index,{category:e.target.value})}>{CATEGORIES.map(c=><option key={c} value={c}>{pretty(c)}</option>)}</select></label>
               <label>Quantity *<input required type="number" min="0.01" step="0.01" disabled={busy} value={item.quantity} onChange={e=>updateItem(index,{quantity:e.target.value})}/></label>
               <label>Rate *<input required type="number" min="0" step="0.01" disabled={busy} value={item.rate} onChange={e=>updateItem(index,{rate:e.target.value})}/></label>
@@ -313,7 +315,7 @@ export default function ExpensesWorkspace(){
       <div className="panel-header"><div><h2>My Claims</h2><p>Select a claim by number/title. No Claim ID is typed.</p></div></div>
       <div className="simple-list">
         {mine.length===0?<div className="empty-state">No expense claims yet.</div>:mine.map(c=><button type="button" className={`simple-row ${selected?.id===c.id?"selected":""}`} key={c.id} onClick={()=>openClaim(c.id)}>
-          <div><strong>{c.claim_number} · {c.title}</strong><span>{pretty(c.claim_type)} · {money(c.claimed_amount,c.currency)} · {c.created_at?new Date(c.created_at).toLocaleString():""}</span></div>
+          <div><strong>{c.claim_number} · {c.title}</strong><span>{pretty(c.claim_type)} · {money(c.claimed_amount,c.currency)} · {c.created_at?new Date(c.created_at).toLocaleString("en-GB",dateOptions({},true)):""}</span></div>
           <Status value={c.status}/>
         </button>)}
       </div>
@@ -347,7 +349,7 @@ export default function ExpensesWorkspace(){
       <section className="subpanel">
         <h3>Expense Items</h3>
         <div className="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>
-          {(selected.items||[]).map(i=><tr key={i.id}><td>{i.expense_date}</td><td>{pretty(i.category)}</td><td>{i.description}</td><td>{i.quantity}</td><td>{money(i.rate,selected.currency)}</td><td>{money(i.amount,selected.currency)}</td></tr>)}
+          {(selected.items||[]).map(i=><tr key={i.id}><td>{formatDisplayDate(i.expense_date)}</td><td>{pretty(i.category)}</td><td>{i.description}</td><td>{i.quantity}</td><td>{money(i.rate,selected.currency)}</td><td>{money(i.amount,selected.currency)}</td></tr>)}
         </tbody></table></div>
       </section>
 
@@ -357,7 +359,7 @@ export default function ExpensesWorkspace(){
         </div></article>
 
         <article className="subpanel"><h3>Claim History</h3><div className="simple-list">
-          {actions.length===0?<div className="empty-compact">No claim actions yet.</div>:actions.map(a=><div className="simple-row" key={a.id}><div><strong>{pretty(a.action)}</strong><span>{a.note||"No note"}{a.amount!=null?` · ${money(a.amount,selected.currency)}`:""}</span></div><span>{a.created_at?new Date(a.created_at).toLocaleString():""}</span></div>)}
+          {actions.length===0?<div className="empty-compact">No claim actions yet.</div>:actions.map(a=><div className="simple-row" key={a.id}><div><strong>{pretty(a.action)}</strong><span>{a.note||"No note"}{a.amount!=null?` · ${money(a.amount,selected.currency)}`:""}</span></div><span>{a.created_at?new Date(a.created_at).toLocaleString("en-GB",dateOptions({},true)):""}</span></div>)}
         </div></article>
       </div>
 
@@ -398,3 +400,4 @@ export default function ExpensesWorkspace(){
     </section>}
   </div>
 }
+// date-display-ddmmyyyy-v1

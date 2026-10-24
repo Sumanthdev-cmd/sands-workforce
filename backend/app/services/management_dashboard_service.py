@@ -7,7 +7,6 @@ from app.models import User
 
 
 TABLE_QUERIES = {
-    "employees": "SELECT COUNT(*) FROM employees WHERE organization_id = :org",
     "active_tasks": "SELECT COUNT(*) FROM tasks WHERE organization_id = :org AND status = 'ACTIVE'",
     "pending_leave_requests": "SELECT COUNT(*) FROM leave_requests WHERE organization_id = :org AND status = 'PENDING'",
     "pending_expense_claims": "SELECT COUNT(*) FROM expense_claims WHERE organization_id = :org AND status IN ('SUBMITTED','VERIFIED')",
@@ -49,6 +48,9 @@ def management_overview(database: Session, *, user: User) -> dict:
         "generated_for_user_id": str(user.id),
         "date": date.today().isoformat(),
     }
+
+    from app.services.dashboard_employee_counts import employee_counts
+    result.update(employee_counts(database, user.organization_id))
 
     for key, query in TABLE_QUERIES.items():
         table_name = query.split(" FROM ", 1)[1].split(" ", 1)[0]
@@ -100,3 +102,5 @@ def management_alerts(database: Session, *, user: User) -> dict:
         "alert_count": len(alerts),
         "alerts": sorted(alerts, key=lambda item: item["count"], reverse=True),
     }
+
+# dashboard-catalogue-count-v1

@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -31,7 +33,7 @@ function displayCode(value) {
 
 function formatDateTime(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString();
+  return new Date(value).toLocaleString("en-GB",dateOptions({},true));
 }
 
 
@@ -849,7 +851,7 @@ export default function AppointmentWorkspace() {
 
           <label>
             Requested Start *
-            <input
+            <DateField
               type="datetime-local"
               required
               disabled={busy}
@@ -865,7 +867,7 @@ export default function AppointmentWorkspace() {
 
           <label>
             Requested End *
-            <input
+            <DateField
               type="datetime-local"
               required
               disabled={busy}
@@ -983,7 +985,7 @@ export default function AppointmentWorkspace() {
             <div className="schema-form">
               <label>
                 Confirmed Start *
-                <input
+                <DateField
                   type="datetime-local"
                   required
                   disabled={busy}
@@ -999,7 +1001,7 @@ export default function AppointmentWorkspace() {
 
               <label>
                 Confirmed End *
-                <input
+                <DateField
                   type="datetime-local"
                   required
                   disabled={busy}
@@ -1131,3 +1133,4 @@ export default function AppointmentWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

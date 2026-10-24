@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -65,14 +67,14 @@ function displayStatus(value) {
 function formatDate(value) {
   if (!value) return "—";
   const parsed = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString("en-GB",dateOptions({},false));
 }
 
 
 function formatDateTime(value) {
   if (!value) return "—";
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString("en-GB",dateOptions({},true));
 }
 
 
@@ -669,7 +671,7 @@ export default function AccountsSheetWorkspace() {
             <div className="form-grid">
               <label>
                 Verification Date *
-                <input
+                <DateField
                   type="date"
                   required
                   max={localDate()}
@@ -748,7 +750,7 @@ export default function AccountsSheetWorkspace() {
 
                     <label>
                       Sheet Generated Date *
-                      <input
+                      <DateField
                         type="date"
                         required
                         max={form.verification_date || localDate()}
@@ -967,3 +969,4 @@ export default function AccountsSheetWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

@@ -1,3 +1,6 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
+import FinancialDownload from "./FinancialDownload";
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useSearchParams} from "react-router-dom";
 import {useAuth} from "./context/AuthContext";
@@ -7,8 +10,8 @@ import "./box_loading.css";
 
 const API="/box-loading/requests";
 const initialForm=()=>({loading_date:localDate(),vehicle_type:"OWN",vehicle_number:"",loading_rate:"",loading_box_count:"",transport_rate:"",transport_box_count:"",notes:""});
-const dateText=value=>value ? new Date(`${value}T12:00:00`).toLocaleDateString("en-IN") : "—";
-const timeText=value=>value ? new Date(value).toLocaleString("en-IN") : "—";
+const dateText=value=>value ? new Date(`${value}T12:00:00`).toLocaleDateString("en-GB",dateOptions({},false)) : "—";
+const timeText=value=>value ? new Date(value).toLocaleString("en-GB",dateOptions({},true)) : "—";
 
 function CostBreakdown({row}) {
   return <dl className="box-costs">
@@ -38,7 +41,7 @@ function LoadingForm({record,onSave,busy,onCancel}) {
     {error&&<div className="error-banner" role="alert">{error}</div>}
     <fieldset disabled={busy}>
       <div className="box-form-grid">
-        <label>Loading date<input type="date" required value={form.loading_date} onChange={e=>set("loading_date",e.target.value)}/></label>
+        <label>Loading date<DateField type="date" required value={form.loading_date} onChange={e=>set("loading_date",e.target.value)}/></label>
         <label>Vehicle type<select value={form.vehicle_type} onChange={e=>setForm(previous=>({...previous,vehicle_type:e.target.value,transport_rate:"",transport_box_count:""}))}><option value="OWN">Own vehicle</option><option value="RENTED">Rented vehicle</option></select></label>
         <label className="box-wide">Vehicle number<input required minLength={2} maxLength={32} autoCapitalize="characters" placeholder="e.g. KA 01 AB 1234" value={form.vehicle_number} onChange={e=>set("vehicle_number",e.target.value.toUpperCase())}/></label>
         <label>Loading cost per box (₹)<input required type="number" inputMode="decimal" min="0" max="1000000" step="0.01" value={form.loading_rate} onChange={e=>set("loading_rate",e.target.value)}/></label>
@@ -73,7 +76,7 @@ function PaymentForm({row,onAction,busy}) {
   const [error,setError]=useState("");
   async function submit(event){event.preventDefault();setError("");try{await onAction(row,"disbursement",form,"Disbursement recorded successfully. This request is now marked Disbursed.");}catch(err){setError(err.message);}}
   return <form className="box-payment" onSubmit={submit}><h3>Record disbursement</h3><p>MD approved <strong>{money(row.total_amount)}</strong>. Record the payment after making it through your usual payment method.</p>{error&&<div className="error-banner" role="alert">{error}</div>}<fieldset disabled={busy}><div className="box-form-grid">
-    <label>Payment date<input required type="date" max={localDate()} value={form.payment_date} onChange={e=>setForm({...form,payment_date:e.target.value})}/></label>
+    <label>Payment date<DateField required type="date" max={localDate()} value={form.payment_date} onChange={e=>setForm({...form,payment_date:e.target.value})}/></label>
     <label>Payment mode<select value={form.payment_mode} onChange={e=>setForm({...form,payment_mode:e.target.value})}><option value="UPI">UPI</option><option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option><option value="CHEQUE">Cheque</option></select></label>
     <label className="box-wide">Paid to<input required maxLength={160} value={form.paid_to} onChange={e=>setForm({...form,paid_to:e.target.value})}/></label>
     <label className="box-wide">Transaction / cheque / cash voucher reference<input required maxLength={160} value={form.payment_reference} onChange={e=>setForm({...form,payment_reference:e.target.value})}/></label>
@@ -139,7 +142,7 @@ export default function BoxLoadingWorkspace(){
     {selectedId&&<section className="panel box-detail" ref={detailRef} aria-label="Selected loading request"><div className="panel-header"><h2>Request details</h2><button type="button" className="secondary-button" disabled={busy} onClick={closeDetail}>Close details</button></div>
       {detailLoading&&<p role="status">Loading request…</p>}{detailError&&<div className="error-banner" role="alert">{detailError}</div>}
       {detail&&<><div className="box-record-heading"><div><span className="eyebrow">{detail.reference}</span><h3>{detail.vehicle_number}</h3><p>{detail.vehicle_type==="OWN"?"Own vehicle":"Rented vehicle"} · {dateText(detail.loading_date)}</p></div><span className={`box-status box-status-${detail.status.toLowerCase()}`}>{statusLabels[detail.status]}</span></div>
-        <CostBreakdown row={detail}/>{detail.notes&&<p className="box-notes">{detail.notes}</p>}
+        <CostBreakdown row={detail}/><FinancialDownload kind="box-loading" recordId={detail.id}/>{detail.notes&&<p className="box-notes">{detail.notes}</p>}
         <dl className="box-metadata"><div><dt>Created by</dt><dd>{detail.created_by_code} · {timeText(detail.created_at)}</dd></div>{detail.submitted_at&&<div><dt>Submitted by</dt><dd>{detail.submitted_by_code} · {timeText(detail.submitted_at)}</dd></div>}{detail.decided_at&&<div><dt>MD decision</dt><dd>{detail.md_code} · {timeText(detail.decided_at)}{detail.decision_note&&<p>{detail.decision_note}</p>}</dd></div>}</dl>
         {admin&&["DRAFT","REJECTED"].includes(detail.status)&&<div className="box-buttons"><button type="button" className="secondary-button" disabled={busy} onClick={()=>startEdit(detail)}>Edit record</button>{detail.status==="DRAFT"&&<button type="button" className="primary-button" disabled={busy} onClick={()=>submitToMd(detail)}>{busy?"Submitting…":"Send to MD for approval"}</button>}</div>}
         {detail.status==="PENDING_MD"&&(md?<DecisionForm key={`${detail.id}:${detail.version}`} row={detail} busy={busy} onAction={action}/>:<p className="box-info">Awaiting MD approval. Disbursement is unavailable.</p>)}
@@ -150,9 +153,12 @@ export default function BoxLoadingWorkspace(){
       </>}
     </section>}
     <section className="panel"><div className="panel-header"><h2>Loading register</h2><span className="muted">{total} record{total===1?"":"s"}</span></div>
-      <form className="box-filters" onSubmit={e=>{e.preventDefault();setOffset(0);setApplied({...filters});}}><label>From date<input type="date" value={filters.from_date} onChange={e=>setFilters({...filters,from_date:e.target.value})}/></label><label>To date<input type="date" value={filters.to_date} onChange={e=>setFilters({...filters,to_date:e.target.value})}/></label><label>Status<select value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key,value])=><option key={key} value={key}>{value}</option>)}</select></label><label>Search<input maxLength={100} placeholder="Vehicle number or Admin code" value={filters.search} onChange={e=>setFilters({...filters,search:e.target.value})}/></label><button type="submit" className="secondary-button" disabled={busy||loading}>Apply filters</button><button type="button" className="link-button" disabled={busy||loading} onClick={()=>{const empty={from_date:"",to_date:"",status:"",search:""};setFilters(empty);setApplied(empty);setOffset(0);}}>Clear filters</button></form>
+      <form className="box-filters" onSubmit={e=>{e.preventDefault();setOffset(0);setApplied({...filters});}}><label>From date<DateField type="date" value={filters.from_date} onChange={e=>setFilters({...filters,from_date:e.target.value})}/></label><label>To date<DateField type="date" value={filters.to_date} onChange={e=>setFilters({...filters,to_date:e.target.value})}/></label><label>Status<select value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All statuses</option>{Object.entries(statusLabels).map(([key,value])=><option key={key} value={key}>{value}</option>)}</select></label><label>Search<input maxLength={100} placeholder="Vehicle number or Admin code" value={filters.search} onChange={e=>setFilters({...filters,search:e.target.value})}/></label><button type="submit" className="secondary-button" disabled={busy||loading}>Apply filters</button><button type="button" className="link-button" disabled={busy||loading} onClick={()=>{const empty={from_date:"",to_date:"",status:"",search:""};setFilters(empty);setApplied(empty);setOffset(0);}}>Clear filters</button></form>
       {loading?<p role="status">Loading records…</p>:items.length===0?<div className="empty-state">{error?"Unable to load the register. Try Refresh.":"No loading records match these filters."}</div>:<div className="box-records">{items.map(row=><article className="box-record" key={row.id}><div className="box-record-heading"><div><span className="eyebrow">{row.reference}</span><h3>{row.vehicle_number}</h3><p>{dateText(row.loading_date)} · {row.vehicle_type==="OWN"?"Own vehicle":"Rented vehicle"}</p></div><span className={`box-status box-status-${row.status.toLowerCase()}`}>{statusLabels[row.status]}</span></div><CostBreakdown row={row}/><div className="box-record-footer"><small>Created by {row.created_by_code}</small><button type="button" className="secondary-button" disabled={busy} onClick={()=>{setParams({request:row.id});setCreating(false);setEditing(null);}}>View request</button></div></article>)}</div>}
       <div className="box-pagination"><button className="secondary-button" type="button" disabled={busy||loading||offset===0} onClick={()=>setOffset(Math.max(0,offset-25))}>Previous</button><span>{total?`${offset+1}–${Math.min(offset+25,total)} of ${total}`:"0 records"}</span><button type="button" className="secondary-button" disabled={busy||loading||offset+25>=total} onClick={()=>setOffset(offset+25)}>Next</button></div>
     </section>
   </div>;
 }
+
+// financial-records-update-v1
+// date-display-ddmmyyyy-v1

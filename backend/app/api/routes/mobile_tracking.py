@@ -142,32 +142,5 @@ def vendor_locations(payload: Batch, vendor: VendorReady, database: DB):
 
 @router.get("/live")
 def live_locations(user: Viewer, database: DB):
-    """Combined native team map; existing employee web map also receives updates."""
-    employees = database.execute(text("""
-        SELECT e.id AS person_id, u.employee_code AS code,
-               concat_ws(' ', e.first_name, e.last_name) AS name, 'Employee' AS kind,
-               l.latitude, l.longitude, l.accuracy_meters, l.recorded_at,
-               a.check_in_at, a.check_out_at
-        FROM employees e JOIN users u ON u.id=e.user_id
-        LEFT JOIN live_locations l ON l.employee_id=e.id AND l.organization_id=e.organization_id
-        LEFT JOIN LATERAL (SELECT check_in_at, check_out_at FROM attendance_records
-            WHERE employee_id=e.id AND organization_id=e.organization_id
-            ORDER BY attendance_date DESC LIMIT 1) a ON TRUE
-        WHERE e.organization_id=:org AND u.is_active=true
-        ORDER BY u.employee_code
-    """), {"org": user.organization_id}).mappings().all()
-    vendors = database.execute(text("""
-        SELECT v.id AS person_id, v.code, v.name, 'Vendor' AS kind,
-               l.latitude, l.longitude, l.accuracy_meters, l.recorded_at,
-               a.check_in_at, a.check_out_at
-        FROM vendors v
-        LEFT JOIN LATERAL (SELECT latitude, longitude, accuracy_meters, recorded_at
-            FROM mobile_vendor_locations WHERE vendor_id=v.id AND organization_id=v.organization_id
-            ORDER BY recorded_at DESC LIMIT 1) l ON TRUE
-        LEFT JOIN LATERAL (SELECT check_in_at, check_out_at FROM vendor_attendance_records
-            WHERE vendor_id=v.id AND organization_id=v.organization_id
-            ORDER BY attendance_date DESC, check_in_at DESC LIMIT 1) a ON TRUE
-        WHERE v.organization_id=:org AND v.status='ACTIVE' ORDER BY v.code
-    """), {"org": user.organization_id}).mappings().all()
-    now = datetime.now(timezone.utc)
-    return [dict(r, active=session_state(dict(r), now)["active"]) for r in [*employees, *vendors]]
+    from app.services.team_location_service import team_locations
+    return team_locations(database, user.organization_id)

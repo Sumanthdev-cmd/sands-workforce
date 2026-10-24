@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {useAuth} from "./context/AuthContext";
 import {apiRequest,uploadWithProgress} from "./lib/api";
@@ -110,7 +112,7 @@ function CreateDocumentGrid({
 
         {type.customExpiry&&<label>
           Expiry / Renewal Date
-          <input
+          <DateField
             type="date"
             disabled={busy}
             value={expiry}
@@ -439,7 +441,7 @@ export default function OutletsWorkspace(){
           <label>Latitude<input type="number" step="any" disabled={busy} value={form.latitude} onChange={e=>setForm({...form,latitude:e.target.value})}/></label>
           <label>Longitude<input type="number" step="any" disabled={busy} value={form.longitude} onChange={e=>setForm({...form,longitude:e.target.value})}/></label>
           <label>Attendance / inspection radius (metres)<input type="number" min="20" max="5000" disabled={busy} value={form.attendance_radius_meters} onChange={e=>setForm({...form,attendance_radius_meters:e.target.value})}/></label>
-          <label>Opening date<input type="date" disabled={busy} value={form.opening_date} onChange={e=>setForm({...form,opening_date:e.target.value})}/></label>
+          <label>Opening date<DateField type="date" disabled={busy} value={form.opening_date} onChange={e=>setForm({...form,opening_date:e.target.value})}/></label>
           <label>Vendor<select disabled={busy} value={form.vendor_id} onChange={e=>applyVendor(e.target.value)}>
             <option value="">No linked vendor</option>
             {vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}
@@ -458,10 +460,10 @@ export default function OutletsWorkspace(){
           </select></label>
           <label>Parcel vendor phone<input disabled={busy} value={form.parcel_vendor_phone} onChange={e=>setForm({...form,parcel_vendor_phone:e.target.value})}/></label>
           <label>Trade / Business Licence Number<input disabled={busy} value={form.licence_number} onChange={e=>setForm({...form,licence_number:e.target.value})}/></label>
-          <label>Trade / Business Licence Expiry<input type="date" disabled={busy} value={form.licence_expiry_date} onChange={e=>setForm({...form,licence_expiry_date:e.target.value})}/></label>
+          <label>Trade / Business Licence Expiry<DateField type="date" disabled={busy} value={form.licence_expiry_date} onChange={e=>setForm({...form,licence_expiry_date:e.target.value})}/></label>
           <label>Excise Licence Number<input disabled={busy} value={form.excise_licence_number} onChange={e=>setForm({...form,excise_licence_number:e.target.value})}/></label>
-          <label>Excise Expiry<input type="date" disabled={busy} value={form.excise_expiry_date} onChange={e=>setForm({...form,excise_expiry_date:e.target.value})}/></label>
-          <label>Rent Agreement Expiry<input type="date" disabled={busy} value={form.rent_agreement_expiry_date} onChange={e=>setForm({...form,rent_agreement_expiry_date:e.target.value})}/></label>
+          <label>Excise Expiry<DateField type="date" disabled={busy} value={form.excise_expiry_date} onChange={e=>setForm({...form,excise_expiry_date:e.target.value})}/></label>
+          <label>Rent Agreement Expiry<DateField type="date" disabled={busy} value={form.rent_agreement_expiry_date} onChange={e=>setForm({...form,rent_agreement_expiry_date:e.target.value})}/></label>
         </div>
 
         <label>Address *<textarea required rows="3" disabled={busy} value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/></label>
@@ -563,10 +565,10 @@ export default function OutletsWorkspace(){
             {["ACTIVE","INACTIVE","TEMPORARILY_CLOSED"].map(x=><option key={x}>{x}</option>)}
           </select></label>
           <label>Trade Licence Number<input disabled={busy} value={edit.licence_number} onChange={e=>setEdit({...edit,licence_number:e.target.value})}/></label>
-          <label>Licence Expiry<input type="date" disabled={busy} value={edit.licence_expiry_date} onChange={e=>setEdit({...edit,licence_expiry_date:e.target.value})}/></label>
+          <label>Licence Expiry<DateField type="date" disabled={busy} value={edit.licence_expiry_date} onChange={e=>setEdit({...edit,licence_expiry_date:e.target.value})}/></label>
           <label>Excise Licence Number<input disabled={busy} value={edit.excise_licence_number} onChange={e=>setEdit({...edit,excise_licence_number:e.target.value})}/></label>
-          <label>Excise Expiry<input type="date" disabled={busy} value={edit.excise_expiry_date} onChange={e=>setEdit({...edit,excise_expiry_date:e.target.value})}/></label>
-          <label>Rent Expiry<input type="date" disabled={busy} value={edit.rent_agreement_expiry_date} onChange={e=>setEdit({...edit,rent_agreement_expiry_date:e.target.value})}/></label>
+          <label>Excise Expiry<DateField type="date" disabled={busy} value={edit.excise_expiry_date} onChange={e=>setEdit({...edit,excise_expiry_date:e.target.value})}/></label>
+          <label>Rent Expiry<DateField type="date" disabled={busy} value={edit.rent_agreement_expiry_date} onChange={e=>setEdit({...edit,rent_agreement_expiry_date:e.target.value})}/></label>
         </div>
         <label>Address<textarea rows="3" disabled={busy} value={edit.address} onChange={e=>setEdit({...edit,address:e.target.value})}/></label>
         <label>Notes<textarea rows="3" disabled={busy} value={edit.notes} onChange={e=>setEdit({...edit,notes:e.target.value})}/></label>
@@ -591,7 +593,7 @@ export default function OutletsWorkspace(){
           <div className="simple-list">
             {inspections.length===0?<div className="empty-compact">No inspections yet.</div>:inspections.slice(0,12).map(r=>
               <div className="simple-row" key={r.id}>
-                <div><strong>{r.report_number}</strong><span>{new Date(r.inspection_started_at).toLocaleString()}</span></div>
+                <div><strong>{r.report_number}</strong><span>{new Date(r.inspection_started_at).toLocaleString("en-GB",dateOptions({},true))}</span></div>
                 <span>{String(r.status).replaceAll("_"," ")}</span>
               </div>)}
           </div>
@@ -655,8 +657,8 @@ export default function OutletsWorkspace(){
               {DOC_TYPES.map(type=><option key={type.category} value={type.category}>{type.label}</option>)}
             </select></label>
             <label>Custom Title<input disabled={busy} value={manageTitle} onChange={e=>setManageTitle(e.target.value)}/></label>
-            <label>Issue Date<input type="date" disabled={busy} value={manageIssueDate} onChange={e=>setManageIssueDate(e.target.value)}/></label>
-            <label>Expiry / Renewal Date<input type="date" disabled={busy} value={manageExpiryDate} onChange={e=>setManageExpiryDate(e.target.value)}/></label>
+            <label>Issue Date<DateField type="date" disabled={busy} value={manageIssueDate} onChange={e=>setManageIssueDate(e.target.value)}/></label>
+            <label>Expiry / Renewal Date<DateField type="date" disabled={busy} value={manageExpiryDate} onChange={e=>setManageExpiryDate(e.target.value)}/></label>
           </div>
 
           <label>Description<textarea rows="3" disabled={busy} value={manageDescription} onChange={e=>setManageDescription(e.target.value)}/></label>
@@ -676,3 +678,4 @@ export default function OutletsWorkspace(){
     </section>}
   </div>
 }
+// date-display-ddmmyyyy-v1

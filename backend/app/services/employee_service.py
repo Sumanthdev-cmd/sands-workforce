@@ -1,8 +1,9 @@
+from app.services.catalogue_service import catalogue_visible, ensure_not_archived
 from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_, select, update
+from sqlalchemy import or_, select, update, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -213,7 +214,7 @@ def list_employees(
     offset: int,
     limit: int,
 ) -> list[Employee]:
-    statement = _employee_query(organization_id)
+    statement = _employee_query(organization_id).where(catalogue_visible("employees", "employee"))
 
     if search:
         pattern = f"%{search.strip()}%"
@@ -309,6 +310,8 @@ def create_employee(
     )
 
     database.add(employee)
+    from app.services.employee_numbering import finish_code_reuse
+    finish_code_reuse(database,organization_id,user)
 
     try:
         database.commit()
@@ -518,12 +521,15 @@ def set_employee_active_state(
     separation_type: str | None = None,
     separation_reason: str | None = None,
 ) -> Employee:
+    database.execute(text("SELECT id FROM employees WHERE organization_id=:org AND id=:id FOR UPDATE"), {"org":organization_id,"id":employee_id})
     employee = load_employee(
         database,
         organization_id,
         employee_id,
     )
 
+    ensure_not_archived(database, organization_id, employee_id, "employee")
+    database.execute(text("DELETE FROM workforce_catalogue_state WHERE organization_id=:org AND person_id=:id AND kind='employee' AND archived_at IS NULL"), {"org":organization_id,"id":employee_id})
     employee.user.is_active = is_active
     employee.employment_status = (
         "ACTIVE" if is_active else (separation_type or "DISABLED")
@@ -555,3 +561,5 @@ def set_employee_active_state(
         organization_id,
         employee.id,
     )
+
+# manual-employee-code-v1

@@ -1,3 +1,6 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
+import AttendanceGrid from "./AttendanceGrid";
 import {isNativeWorkday,openNativeWorkday} from "./lib/nativeWorkday";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useAuth} from "./context/AuthContext";
@@ -9,7 +12,7 @@ const isoDate=(date)=>date.toISOString().slice(0,10);
 const today=()=>isoDate(new Date());
 const monthAgo=()=>{const date=new Date();date.setDate(date.getDate()-30);return isoDate(date)};
 const displayTime=(value)=>value?new Date(value).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—";
-const displayDate=(value)=>value?new Date(`${value}T00:00:00`).toLocaleDateString():"—";
+const displayDate=(value)=>value?new Date(`${value}T00:00:00`).toLocaleDateString("en-GB",dateOptions({},false)):"—";
 const duration=(minutes)=>`${Math.floor((minutes||0)/60)}h ${(minutes||0)%60}m`;
 const statusClass=(value)=>String(value||"absent").toLowerCase().replaceAll("_","-");
 const errorText=(error)=>{
@@ -62,6 +65,7 @@ export default function AttendanceWorkspace(){
   const [locations,setLocations]=useState([]);
   const [employees,setEmployees]=useState([]);
   const [vendorAttendance,setVendorAttendance]=useState([]);
+  const [liveTeam,setLiveTeam]=useState([]);
   const [vendorRoster,setVendorRoster]=useState([]);
   const [geofences,setGeofences]=useState([]);
   const [dayState,setDayState]=useState(null);
@@ -93,6 +97,7 @@ export default function AttendanceWorkspace(){
     if(canMonitor){
       jobs.organization=apiRequest(`/attendance${query}`);
       jobs.roster=apiRequest("/locations/roster");
+      jobs.liveTeam=apiRequest("/mobile/live");
       jobs.vendors=apiRequest(`/vendor-portal/admin/attendance${query}`);
       jobs.vendorRoster=apiRequest("/payroll/vendors");
       jobs.geofences=apiRequest("/geofences");
@@ -111,6 +116,7 @@ export default function AttendanceWorkspace(){
       if(key==="policy"){setPolicy(value||null);setLunchMinutes(String(value?.lunch_break_minutes??30))}
       if(key==="organization")setOrganization(Array.isArray(value)?value:[]);
       if(key==="roster"){const roster=Array.isArray(value)?value:[];setEmployees(roster);setLocations(roster.filter(item=>item.latitude!=null&&item.longitude!=null))}
+      if(key==="liveTeam")setLiveTeam(Array.isArray(value)?value:[]);
       if(key==="vendors")setVendorAttendance(Array.isArray(value)?value:[]);
       if(key==="vendorRoster")setVendorRoster(Array.isArray(value)?value:[]);
       if(key==="geofences")setGeofences(Array.isArray(value)?value:[]);
@@ -203,7 +209,7 @@ export default function AttendanceWorkspace(){
   const onDuty=Boolean(todayRecord?.check_in_at&&!todayRecord?.check_out_at);
   const lunchActive=lunch?.status==="ACTIVE";
   const dutyOutside=dutyExit?.status==="OUTSIDE";
-  const selectedRangeLabel=range.start_date===range.end_date?displayDate(range.start_date):`${displayDate(range.start_date)} - ${displayDate(range.end_date)}`;
+  const selectedRangeLabel=range.start_date===range.end_date?formatDisplayDate(range.start_date):`${formatDisplayDate(range.start_date)} - ${formatDisplayDate(range.end_date)}`;
   const vendorOrgRows=useMemo(()=>{
     const rows=vendorAttendance.map((row)=>({
       ...row,
@@ -266,7 +272,7 @@ export default function AttendanceWorkspace(){
 
     <section className="attendance-hero">
       <div>
-        <span className="attendance-date">{new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"})}</span>
+        <span className="attendance-date">{new Date().toLocaleDateString("en-GB",dateOptions({weekday:"long",day:"numeric",month:"long"},false))}</span>
         <h2>{todayRecord?.check_in_at?"You’re checked in":"Ready to start your day?"}</h2>
         <p>{todayRecord?.check_in_at?`Check-in recorded at ${displayTime(todayRecord.check_in_at)}.`:"Enable GPS and check in from your assigned work location."}</p>
       </div>
@@ -294,19 +300,19 @@ export default function AttendanceWorkspace(){
     <nav className="attendance-tabs">
       <button className={tab==="overview"?"active":""} onClick={()=>setTab("overview")}>My history</button>
       {canMonitor&&<button className={tab==="team"?"active":""} onClick={()=>setTab("team")}>Organization</button>}
-      {canMonitor&&<button className={tab==="locations"?"active":""} onClick={()=>setTab("locations")}>Live map <span>{locations.length+vendorMapCount}</span></button>}
+      {canMonitor&&<button className={tab==="locations"?"active":""} onClick={()=>setTab("locations")}>Live map <span>{liveTeam.filter(x=>x.location_status==="LIVE").length}</span></button>}
       {isAdmin&&<button className={tab==="policies"?"active":""} onClick={()=>setTab("policies")}>Policies & approvals <span>{dutyApprovals.length}</span></button>}
       {isAdmin&&<button className={tab==="setup"?"active":""} onClick={()=>setTab("setup")}>Work locations</button>}
     </nav>
 
-    {!["locations","setup","policies"].includes(tab)&&<div className="attendance-filters"><label>From<input type="date" value={range.start_date} max={range.end_date} onChange={(e)=>setRange({...range,start_date:e.target.value})}/></label><label>To<input type="date" value={range.end_date} min={range.start_date} onChange={(e)=>setRange({...range,end_date:e.target.value})}/></label>{tab==="team"&&<label className="attendance-search">Search<input placeholder="Name, code or status" value={search} onChange={(e)=>setSearch(e.target.value)}/></label>}</div>}
+    {!["locations","setup","policies"].includes(tab)&&<div className="attendance-filters"><label>From<DateField type="date" value={range.start_date} max={range.end_date} onChange={(e)=>setRange({...range,start_date:e.target.value})}/></label><label>To<DateField type="date" value={range.end_date} min={range.start_date} onChange={(e)=>setRange({...range,end_date:e.target.value})}/></label>{tab==="team"&&<label className="attendance-search">Search<input placeholder="Name, code or status" value={search} onChange={(e)=>setSearch(e.target.value)}/></label>}</div>}
 
     {loading?<div className="empty-state">Loading attendance…</div>
       :tab==="overview"?<AttendanceTable rows={mine}/>
-      :tab==="team"?<><div className="attendance-summary"><Metric label="People" value={stats.employees}/><Metric label="Present / checked out" value={stats.present}/><Metric label="Late" value={stats.late}/><Metric label="Total hours" value={stats.hours}/></div><AttendanceTable rows={filtered} showEmployee/></>
+      :tab==="team"?<AttendanceGrid range={range} search={search} refreshKey={organization}/>
       :tab==="setup"?<LocationSetup employees={employees} geofences={geofences} onRefresh={load}/>
       :tab==="policies"?<PolicyPanel policy={policy} lunchMinutes={lunchMinutes} setLunchMinutes={setLunchMinutes} approvals={dutyApprovals} busy={busy} onSave={saveLunchPolicy} onDecision={decideDutyExit}/>
-      :<LiveMap employees={employeeLocations} vendors={vendorAttendance}/>}
+      :<LiveMap rows={liveTeam}/>}
   </div>;
 }
 
@@ -324,7 +330,7 @@ function PolicyPanel({policy,lunchMinutes,setLunchMinutes,approvals,busy,onSave,
       <div className="panel-header"><div><span className="eyebrow">ADMIN approval</span><h2>On-duty geofence exits</h2><p>Employees remain checked in outside the geofence only after approval.</p></div><span className="pending-leave-badge">{approvals.length}</span></div>
       <div className="simple-list">
         {approvals.length===0?<div className="empty-state">No duty-exit requests are waiting.</div>:approvals.map(item=><article className="subpanel" key={item.id}>
-          <div className="panel-header"><div><strong>{item.employee_code} — {item.employee_name}</strong><p>{new Date(item.requested_at).toLocaleString()}</p></div><StatusPill value={item.status}/></div>
+          <div className="panel-header"><div><strong>{item.employee_code} — {item.employee_name}</strong><p>{new Date(item.requested_at).toLocaleString("en-GB",dateOptions({},true))}</p></div><StatusPill value={item.status}/></div>
           <p>{item.reason}</p>
           <div className="action-strip"><button className="primary-button" disabled={busy} onClick={()=>onDecision(item,true)}>Approve</button><button className="secondary-button danger" disabled={busy} onClick={()=>onDecision(item,false)}>Reject</button></div>
         </article>)}
@@ -334,7 +340,7 @@ function PolicyPanel({policy,lunchMinutes,setLunchMinutes,approvals,busy,onSave,
 }
 
 function Metric({label,value}){return <div><small>{label}</small><strong>{value}</strong></div>}
-function AttendanceTable({rows,showEmployee=false}){return <section className="panel attendance-table-panel"><div className="attendance-table"><div className="attendance-row attendance-table-head">{showEmployee&&<span>Person</span>}<span>Date</span><span>Status</span><span>Check in</span><span>Check out</span><span>Worked</span><span>Late</span></div>{rows.length===0?<div className="empty-state">No attendance records in this date range.</div>:rows.map((row)=><div className="attendance-row" key={row.id||`${row.employee_id}-${row.attendance_date}-no-record`}>{showEmployee&&<span className="attendance-person"><Initials name={row.employee_name}/><span><strong>{row.employee_name}</strong><small>{row.employee_code}{row.person_type==="VENDOR"?" · Vendor":" · Employee"}{row.outlet_label?` · ${row.outlet_label}`:""}</small></span></span>}<span data-label="Date">{row.attendance_date_label||displayDate(row.attendance_date)}</span><span data-label="Status"><StatusPill value={row.status}/></span><span data-label="Check in">{displayTime(row.check_in_at)}</span><span data-label="Check out">{displayTime(row.check_out_at)}</span><span data-label="Worked">{duration(row.worked_minutes)}</span><span data-label="Late">{row.late_minutes||0} min</span></div>)}</div></section>}
+function AttendanceTable({rows,showEmployee=false}){return <section className="panel attendance-table-panel"><div className="attendance-table"><div className="attendance-row attendance-table-head">{showEmployee&&<span>Person</span>}<span>Date</span><span>Status</span><span>Check in</span><span>Check out</span><span>Worked</span><span>Late</span></div>{rows.length===0?<div className="empty-state">No attendance records in this date range.</div>:rows.map((row)=><div className="attendance-row" key={row.id||`${row.employee_id}-${row.attendance_date}-no-record`}>{showEmployee&&<span className="attendance-person"><Initials name={row.employee_name}/><span><strong>{row.employee_name}</strong><small>{row.employee_code}{row.person_type==="VENDOR"?" · Vendor":" · Employee"}{row.outlet_label?` · ${row.outlet_label}`:""}</small></span></span>}<span data-label="Date">{row.attendance_date_label||formatDisplayDate(row.attendance_date)}</span><span data-label="Status"><StatusPill value={row.status}/></span><span data-label="Check in">{displayTime(row.check_in_at)}</span><span data-label="Check out">{displayTime(row.check_out_at)}</span><span data-label="Worked">{duration(row.worked_minutes)}</span><span data-label="Late">{row.late_minutes||0} min</span></div>)}</div></section>}
 
 function LeafletMap({points}){
   const nodeRef=useRef(null);
@@ -349,7 +355,7 @@ function LeafletMap({points}){
         const state=signal(point.recorded_at);
         const color=state.className==="live"?"#079455":state.className==="stale"?"#d97706":"#64748b";
         const safe=value=>String(value||"").replace(/[<>&]/g,"");
-        L.circleMarker([point.latitude,point.longitude],{radius:10,color,fillColor:color,fillOpacity:.9}).addTo(map).bindPopup(`<strong>${safe(point.name)}</strong><br>${safe(point.code)} · ${safe(point.type)}<br>Last update: ${new Date(point.recorded_at).toLocaleString()}`);
+        L.circleMarker([point.latitude,point.longitude],{radius:10,color,fillColor:color,fillOpacity:.9}).addTo(map).bindPopup(`<strong>${safe(point.name)}</strong><br>${safe(point.code)} · ${safe(point.type)}<br>Last update: ${new Date(point.recorded_at).toLocaleString("en-GB",dateOptions({},true))}`);
       });
       if(points.length)map.fitBounds(points.map(point=>[point.latitude,point.longitude]),{padding:[35,35],maxZoom:16});
     }).catch(()=>{});
@@ -358,9 +364,18 @@ function LeafletMap({points}){
   return <div ref={nodeRef} className="attendance-leaflet"/>;
 }
 
-function LiveMap({employees,vendors}){
-  const employeePoints=employees.filter(item=>item.location).map(item=>({...item.location,name:item.full_name,code:item.employee_code,type:"Employee"}));
-  const vendorPoints=vendors.filter(item=>item.check_in_latitude).map(item=>({latitude:item.check_in_latitude,longitude:item.check_in_longitude,recorded_at:item.check_in_at,name:item.vendor_name,code:item.vendor_code,type:`Vendor · ${item.outlet_code}`}));
-  const points=[...employeePoints,...vendorPoints];
-  return <div className="attendance-map-layout"><section className="attendance-map"><LeafletMap points={points}/></section><aside className="attendance-map-list"><h3>Location status</h3><p>{employees.length} employee(s) · {vendorPoints.length} vendor check-in(s)</p>{employees.map(item=>{const state=signal(item.location?.recorded_at);return <article key={item.id}><div className="attendance-person"><Initials name={item.full_name}/><span><strong>{item.full_name}</strong><small>{item.employee_code} · Employee</small></span></div><span className={`location-signal ${state.className}`}>● {state.label}</span>{item.location&&<small>{new Date(item.location.recorded_at).toLocaleString()}</small>}</article>})}{vendors.map(item=>{const state=signal(item.check_in_at);return <article key={`vendor-${item.id}`}><div className="attendance-person"><Initials name={item.vendor_name}/><span><strong>{item.vendor_name}</strong><small>{item.vendor_code} · Vendor · {item.outlet_name}</small></span></div><span className={`location-signal ${state.className}`}>● {state.label}</span><small>In: {displayTime(item.check_in_at)} · Out: {displayTime(item.check_out_at)} · Worked: {duration(item.worked_minutes)}</small></article>})}</aside></div>;
+function LiveMap({rows}){
+  const [clock,setClock]=useState(Date.now());
+  useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),30000);return()=>clearInterval(timer)},[]);
+  const age=r=>Math.max(clock,Date.now())-new Date(r.recorded_at).getTime();
+  const points=rows.filter(r=>r.active&&r.location_status==="LIVE"&&age(r)>=-30000&&age(r)<=300000&&r.latitude!=null&&r.longitude!=null).map(r=>({...r,type:r.kind}));
+  const labels={LIVE:"Live",NO_SIGNAL:"Waiting for GPS",STALE:"Location update overdue",LOW_ACCURACY:"GPS accuracy too low",CLOCK_ERROR:"Device clock needs checking",OFF_DUTY:"Not checked in",SHIFT_REVIEW:"Unclosed shift needs review"};
+  return <div className="attendance-map-layout"><section className="attendance-map"><p>Current duty locations only. GPS must be updated within 5 minutes and accurate to 100 metres. Attendance date filters do not affect this map.</p><LeafletMap points={points}/></section><aside className="attendance-map-list"><h3>Location status</h3><p>{points.length} live · {rows.filter(r=>r.active).length} on duty</p>{rows.map(r=><article key={`${r.kind}-${r.person_id}`}><div className="attendance-person"><Initials name={r.name}/><span><strong>{r.name}</strong><small>{r.code} · {r.kind}</small></span></div><span className={`location-signal ${r.location_status==="LIVE"?"live":"offline"}`}>{r.location_status==="LIVE"&&age(r)>300000?"Location update overdue":labels[r.location_status]||"Location unavailable"}</span>{r.recorded_at&&<small>Last GPS: {new Date(r.recorded_at).toLocaleString("en-GB",dateOptions({},true))}{r.accuracy_meters!=null?` · ±${Math.round(r.accuracy_meters)} m`:""}</small>}<small>In: {displayTime(r.check_in_at)} · Out: {displayTime(r.check_out_at)}</small></article>)}</aside></div>;
 }
+
+// attendance-grid-update-v1
+
+import "./locationStatusLayout.css";
+
+// navigation-codes-update-v1
+// date-display-ddmmyyyy-v1

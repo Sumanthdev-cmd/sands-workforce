@@ -76,6 +76,8 @@ def _amount(value) -> str:
     return f"{float(value or 0):.2f}"
 
 
+from app.services.payroll_print_layout import render_register, render_payslip
+
 @router.post(
     "/structures/{employee_id}",
     response_model=SalaryStructureResponse,
@@ -508,94 +510,12 @@ def download_finalized_payroll(
 
 
 @router.get("/runs/{run_id}/print", response_class=HTMLResponse)
-def print_finalized_payroll(
-    run_id: UUID,
-    current_user: CurrentUser,
-    database: DatabaseSession,
-):
-    payroll_run, items = get_finalized_payroll_export(
-        database,
-        current_user,
-        run_id,
-    )
+def print_finalized_payroll(run_id: UUID, current_user: CurrentUser, database: DatabaseSession):
+    payroll_run, items = get_finalized_payroll_export(database, current_user, run_id)
     vendor_items = list_vendor_payroll_items(database, current_user, run_id)
-    rows = []
-    for item in items:
-        deductions = (
-            float(item.get("fixed_deduction") or 0)
-            + float(item.get("other_deductions") or 0)
-            + float(item.get("salary_advance_deduction") or 0)
-        )
-        rows.append(
-            "<tr>"
-            f"<td>{escape(str(item.get('employee_code') or ''))}<br>"
-            f"<small>{escape(str(item.get('employee_name') or ''))}</small><br>"
-            f"<small>Bank: {escape(str(item.get('bank_name') or '—'))}</small><br>"
-            f"<small>IFSC: {escape(str(item.get('bank_ifsc') or '—'))}</small><br>"
-            f"<small>A/C: {escape(str(item.get('bank_account_number') or '—'))}</small></td>"
-            f"<td>{_amount(item.get('working_days'))}</td>"
-            f"<td>{_amount(item.get('payable_days'))}</td>"
-            f"<td>{_amount(item.get('absent_days'))}</td>"
-            f"<td class='right'>{_amount(item.get('gross_earned'))}</td>"
-            f"<td class='right'>{_amount(item.get('daily_allowance_earned'))}</td>"
-            f"<td class='right'>{_amount(item.get('overtime_benefit'))}</td>"
-            f"<td class='right'>{_amount(deductions)}</td>"
-            f"<td class='right'><strong>{_amount(item.get('net_salary'))}</strong></td>"
-            f"<td>{'HELD' if item.get('is_held') else 'PAYABLE'}</td>"
-            "</tr>"
-        )
-    vendor_rows = []
-    for item in vendor_items:
-        vendor_deductions = (
-            float(item.get("fixed_deduction") or 0)
-            + float(item.get("other_deductions") or 0)
-            + float(item.get("salary_advance_deduction") or 0)
-        )
-        vendor_rows.append(
-            "<tr>"
-            f"<td>{escape(str(item.get('vendor_code') or ''))}<br>"
-            f"<small>{escape(str(item.get('vendor_name') or ''))}</small></td>"
-            f"<td>{escape(', '.join(item.get('outlet_names') or []))}</td>"
-            f"<td>{_amount(item.get('working_days'))}</td>"
-            f"<td>{_amount(item.get('payable_days'))}</td>"
-            f"<td>{_amount(item.get('absent_days'))}</td>"
-            f"<td class='right'>{_amount(item.get('gross_earned'))}</td>"
-            f"<td class='right'>{_amount(item.get('daily_allowance_earned'))}</td>"
-            f"<td class='right'>{_amount(vendor_deductions)}</td>"
-            f"<td class='right'><strong>{_amount(item.get('net_salary'))}</strong></td>"
-            "</tr>"
-        )
-    html = f"""
-    <!doctype html><html><head><meta charset="utf-8">
-    <title>Finalized Payroll {payroll_run.period_start} to {payroll_run.period_end}</title>
-    <style>
-      body{{font-family:Arial,sans-serif;margin:28px;color:#111}}
-      .top{{display:flex;justify-content:space-between;gap:24px}}
-      .summary{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}}
-      .box{{border:1px solid #bbb;padding:12px}} table{{width:100%;border-collapse:collapse}}
-      th,td{{border:1px solid #bbb;padding:8px;text-align:left}} .right{{text-align:right}}
-      small{{color:#555}} @media print{{button{{display:none}} body{{margin:10mm}}}}
-    </style></head><body>
-    <button onclick="window.print()">Print / Save as PDF</button>
-    <div class="top"><div><h1>Finalized Payroll</h1>
-    <p>Period: {payroll_run.period_start} to {payroll_run.period_end}</p></div>
-    <div><strong>Status: FINALIZED</strong><p>Approved: {payroll_run.approved_at or '—'}</p></div></div>
-    <p><strong>MD approval note:</strong> {escape(payroll_run.approval_note or '—')}</p>
-    <div class="summary"><div class="box">Employees<br><strong>{payroll_run.total_employees}</strong></div>
-    <div class="box">Vendors<br><strong>{payroll_run.total_vendors}</strong></div>
-    <div class="box">Gross<br><strong>{_amount(payroll_run.total_gross)}</strong></div>
-    <div class="box">Deductions<br><strong>{_amount(payroll_run.total_deductions)}</strong></div>
-    <div class="box">Net Payable<br><strong>{_amount(payroll_run.total_net)}</strong></div></div>
-    <table><thead><tr><th>Employee</th><th>Working</th><th>Payable</th><th>Absent</th>
-    <th>Gross</th><th>Daily Allowance</th><th>OT</th><th>Deductions</th><th>Net</th><th>Payment</th>
-    </tr></thead><tbody>{''.join(rows)}</tbody></table>
-    <h2>Vendor Payroll</h2>
-    <p>Vendors work all days including Sunday, except recorded government closures.</p>
-    <table><thead><tr><th>Vendor</th><th>Shop / Outlet</th><th>Working</th><th>Payable</th><th>Absent</th>
-    <th>Gross</th><th>Daily Allowance</th><th>Deductions</th><th>Net</th></tr></thead><tbody>{''.join(vendor_rows)}</tbody></table>
-    </body></html>
-    """
-    return HTMLResponse(content=html)
+    from app.models.organization import Organization
+    org = database.get(Organization, current_user.organization_id)
+    return HTMLResponse(content=render_register(payroll_run, items, vendor_items, org.timezone if org else "Asia/Kolkata"))
 
 
 @router.get(
@@ -613,64 +533,10 @@ def read_my_slips(
     "/payslips/{item_id}/print",
     response_class=HTMLResponse,
 )
-def print_payslip(
-    item_id: UUID,
-    current_user: CurrentUser,
-    database: DatabaseSession,
-):
-    item, payroll_run, structure, employee = get_printable_payslip(
-        database,
-        current_user,
-        item_id,
-    )
+def print_payslip(item_id: UUID, current_user: CurrentUser, database: DatabaseSession):
+    item, payroll_run, structure, employee = get_printable_payslip(database, current_user, item_id)
+    return HTMLResponse(content=render_payslip(item, payroll_run, structure, employee))
 
-    held_message = ""
-    if item.is_held:
-        held_message = (
-            '<p class="held">Salary held: '
-            + escape(item.hold_reason or "")
-            + "</p>"
-        )
+# date-display-ddmmyyyy-v1
 
-    html = f"""
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Payslip {escape(item.payslip_number)}</title>
-      <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; }}
-        table {{ width: 100%; border-collapse: collapse; margin-top: 24px; }}
-        th, td {{ border: 1px solid #bbb; padding: 10px; }}
-        .right {{ text-align: right; }}
-        .held {{ color: #b00020; font-weight: bold; }}
-        @media print {{ button {{ display: none; }} }}
-      </style>
-    </head>
-    <body>
-      <button onclick="window.print()">Print / Save as PDF</button>
-      <h1>Salary Slip</h1>
-      <p>Employee: {escape(employee.full_name)}</p>
-      <p>Payslip: {escape(item.payslip_number)}</p>
-      <p>Period: {payroll_run.period_start} to {payroll_run.period_end}</p>
-      <table>
-        <tr><th>Description</th><th class="right">Amount ({escape(structure.currency)})</th></tr>
-        <tr><td>Basic earned</td><td class="right">{item.basic_earned:.2f}</td></tr>
-        <tr><td>HRA earned</td><td class="right">{item.hra_earned:.2f}</td></tr>
-        <tr><td>Conveyance</td><td class="right">{item.conveyance_earned:.2f}</td></tr>
-        <tr><td>Other allowance</td><td class="right">{item.other_allowance_earned:.2f}</td></tr>
-        <tr><td>Daily allowance ({item.payable_days:.2f} payable days)</td><td class="right">{item.daily_allowance_earned:.2f}</td></tr>
-        <tr><td>Approved overtime benefit</td><td class="right">{item.overtime_benefit:.2f}</td></tr>
-        <tr><td>Late-attendance half-day deduction</td><td class="right">-{item.other_deductions:.2f}</td></tr>
-        <tr><td>Salary advance recovery</td><td class="right">-{item.salary_advance_deduction:.2f}</td></tr>
-        <tr><td>Fixed deduction</td><td class="right">-{item.fixed_deduction:.2f}</td></tr>
-        <tr><th>Net salary</th><th class="right">{item.net_salary:.2f}</th></tr>
-      </table>
-      <p>Working days: {item.working_days:.2f}</p>
-      <p>Payable days: {item.payable_days:.2f}</p>
-      <p>Absent days: {item.absent_days:.2f}</p>
-      {held_message}
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html)
+# payroll-reference-layout-v1

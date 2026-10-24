@@ -1,3 +1,4 @@
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useState} from "react";
 
 import {useAuth} from "./context/AuthContext";
@@ -12,7 +13,7 @@ const readableError=(error)=>{
 };
 
 const label=(value)=>String(value||"—").replaceAll("_"," ");
-const when=(value)=>value?new Date(value).toLocaleString():"—";
+const when=(value)=>value?new Date(value).toLocaleString("en-GB",dateOptions({},true)):"—";
 
 function Status({value}){
   const tone=["APPROVED","COMPLETED","RELEASED"].includes(value)?"good":["REJECTED","EXPIRED"].includes(value)?"bad":"warn";
@@ -157,3 +158,4 @@ export default function SecurityWorkspace(){
     </section>
   </div>;
 }
+// date-display-ddmmyyyy-v1

@@ -1,3 +1,4 @@
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useState} from "react";
 import {apiRequest} from "./lib/api";
 import {useAuth} from "./context/AuthContext";
@@ -10,7 +11,7 @@ function errText(error){
   return "The request could not be completed.";
 }
 
-function dateTime(value){return value?new Date(value).toLocaleString():"Never";}
+function dateTime(value){return value?new Date(value).toLocaleString("en-GB",dateOptions({},true)):"Never";}
 
 export default function VendorAccountsWorkspace(){
   const {roles}=useAuth();
@@ -136,3 +137,4 @@ export default function VendorAccountsWorkspace(){
     </section>
   </div>
 }
+// date-display-ddmmyyyy-v1

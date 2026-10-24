@@ -1,11 +1,12 @@
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useState} from "react";
 
 import {apiRequest} from "./lib/api";
 
 
 const readableError=(error)=>typeof error?.data?.detail==="string"?error.data.detail:error?.message||"Unable to load the MD overview.";
-const dateLabel=(value)=>new Date(`${value}T00:00:00`).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"});
-const dateTime=(value)=>value?new Date(value).toLocaleString():"—";
+const dateLabel=(value)=>new Date(`${value}T00:00:00`).toLocaleDateString("en-GB",dateOptions({weekday:"short",day:"numeric",month:"short",year:"numeric"},false));
+const dateTime=(value)=>value?new Date(value).toLocaleString("en-GB",dateOptions({},true)):"—";
 const duration=(value)=>`${Math.floor(Number(value||0)/60)}h ${Number(value||0)%60}m`;
 const escapeHtml=(value)=>String(value??"—").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 
@@ -77,3 +78,4 @@ export default function MdDailyOverview(){
     </>}
   </div>;
 }
+// date-display-ddmmyyyy-v1

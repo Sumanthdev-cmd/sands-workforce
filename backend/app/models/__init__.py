@@ -153,3 +153,5 @@ from app.models.maintenance_bill import (
 )
 
 from app.models.box_loading import BoxLoadingRequest, BoxLoadingAction
+
+from app.models.cashbook import CashbookEntry

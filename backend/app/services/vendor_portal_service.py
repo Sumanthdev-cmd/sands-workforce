@@ -225,7 +225,11 @@ def reset_admin_password(database: Session, user: User, account_id: UUID, tempor
 
 def set_account_status(database: Session, user: User, account_id: UUID, enabled: bool) -> dict:
     require_admin(database, user)
-    _admin_account(database, user, account_id)
+    account = _admin_account(database, user, account_id)
+    if enabled:
+        active = database.scalar(text("SELECT id FROM vendors WHERE organization_id=:org AND id=:id AND status='ACTIVE'"), {"org":user.organization_id,"id":account["vendor_id"]})
+        if active is None:
+            raise HTTPException(409, "This vendor is separated or disabled. Restore the vendor record before enabling portal access.")
     now = _now()
     new_status = "ACTIVE" if enabled else "DISABLED"
     database.execute(
@@ -274,6 +278,7 @@ def login_vendor(
         JOIN organizations o ON o.id = a.organization_id
         WHERE UPPER(o.code) = :organization_code
           AND UPPER(v.code) = :vendor_code
+          AND v.organization_id=a.organization_id AND v.status='ACTIVE' AND o.is_active=true
         LIMIT 1
         """,
         {"organization_code": organization_code.upper(), "vendor_code": vendor_code.upper()},
@@ -380,6 +385,7 @@ def authenticate_vendor_session(database: Session, raw_token: str) -> VendorPort
         JOIN organizations o ON o.id = a.organization_id
         JOIN vendors v ON v.id = a.vendor_id
         WHERE s.token_hash=:token_hash
+          AND v.organization_id=a.organization_id AND v.status='ACTIVE' AND o.is_active=true
         LIMIT 1
         """,
         {"token_hash": token_hash},

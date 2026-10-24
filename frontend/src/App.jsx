@@ -1,3 +1,10 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
+import NotificationInbox from "./NotificationInbox";
+import {compareModules} from "./navigationOrder";
+import FinancialRecordsWorkspace from "./FinancialRecordsWorkspace";
+import CashbookWorkspace from "./CashbookWorkspace";
+import VendorCatalogue from "./VendorCatalogue";
 import BoxLoadingWorkspace from "./BoxLoadingWorkspace";
 import {createContext,useContext,useEffect,useMemo,useRef,useState} from "react";
 import {Navigate,NavLink,Outlet,Route,Routes,useLocation,useNavigate,useParams} from "react-router-dom";
@@ -24,10 +31,12 @@ import ShopRentalsWorkspace from "./ShopRentalsWorkspace";
 
 import VendorPortal from "./VendorPortal";
 import VendorAccountsWorkspace from "./VendorAccountsWorkspace";
-const ALL=["ADMIN","MD","GM","MANAGER","ACCOUNTS_MANAGER","ACCOUNTS_SECRETARY","HR_RECRUITER","FIELD_VISITOR","OFFICE_EMPLOYEE","EMPLOYEE"];
+const ALL=["CASHIER","ADMIN","MD","GM","MANAGER","ACCOUNTS_MANAGER","ACCOUNTS_SECRETARY","HR_RECRUITER","FIELD_VISITOR","OFFICE_EMPLOYEE","EMPLOYEE"];
 const MGMT=["ADMIN","MD","GM","MANAGER"];
 const SENIOR=["ADMIN","MD","GM"];
 const modules = [
+  ["financial-records", "Financial Records", "📥", ["ADMIN", "MD"]],
+  ["cashbook", "Credit/Debit Record", "💰", ["CASHIER", "ADMIN", "MD"]],
   ["box-loading", "Box Loading", "📦", ["ADMIN", "MD"]],
   ["dashboard", "Dashboard", "📊", ALL],
   ["employees", "Employees", "👥", MGMT],
@@ -57,7 +66,7 @@ const modules = [
 ];
 const canSee = (roles, allowed = []) =>
   !roles.length || roles.some((r) => allowed.includes(r));
-const visibleModules=(roles)=>modules.filter(([, , ,allowed])=>canSee(roles,allowed));
+const visibleModules=(roles)=>modules.filter(([, , ,allowed])=>canSee(roles,allowed)).sort(compareModules);
 
 const ActionAlertsContext=createContext({counts:{},refresh:()=>{}});
 const useActionAlerts=()=>useContext(ActionAlertsContext);
@@ -177,7 +186,7 @@ function Shell(){
   return <ActionAlertsContext.Provider value={{counts,refresh:refreshAlerts}}>
     <div className="app-shell">
       {mobile&&<button className="sidebar-backdrop" onClick={()=>setMobile(false)}/>}<aside className={`sidebar ${mobile?"open":""}`}><Brand/><nav className="sidebar-nav">{visibleModules(roles).map(([id,label,icon])=>{const count=id==="notifications"?notifs.length:actionCount(counts,id);return <NavLink key={id} className={({isActive})=>`sidebar-link ${isActive?"active":""}`} to={hrefFor(id)} onClick={()=>setMobile(false)}><span className="module-link-icon">{icon}{count>0&&<span className="module-action-badge">{count>99?"99+":count}</span>}</span><span>{label}</span></NavLink>})}</nav><div className="sidebar-user"><strong>{code}</strong><small>{roles.join(", ")||"Authenticated user"}</small><button className="secondary-button dark" onClick={signOut}>Sign out</button></div></aside>
-      <div className="content-shell"><header className="topbar"><button className="icon-button mobile-only" onClick={()=>setMobile(true)}>☰</button><div className="topbar-title"><strong>Workforce Management</strong><span>{new Date().toLocaleDateString()}</span></div><div className="topbar-actions"><div className="notification-wrap" ref={notificationWrapRef}><button type="button" aria-label="Notifications" aria-expanded={open} aria-controls="header-notification-panel" className="icon-button notification-button" onClick={()=>setOpen(!open)}>🔔{notifs.length>0&&<span className="notification-badge">{notifs.length>99?"99+":notifs.length}</span>}</button>{open&&<div className="notification-popover" id="header-notification-panel" role="region" aria-label="Notifications"><div className="popover-header"><strong>Notifications</strong><div className="notification-header-actions"><button type="button" className="link-button" onClick={()=>{setOpen(false);nav("/module/notifications")}}>View all</button><button type="button" className="notification-close" aria-label="Close notifications" onClick={()=>setOpen(false)}>×</button></div></div>{notifs.length===0?<div className="empty-compact">No unread notifications.</div>:notifs.slice(0,6).map(n=><button type="button" className="notification-item notification-item-button" key={n.id} onClick={()=>openNotification(n)}><strong>{n.title}</strong><span>{n.body}</span>{n?.payload?.route&&<small>Open related action →</small>}</button>)}</div>}</div><button className="profile-chip" onClick={()=>nav("/profile")}><span className="avatar">{code.slice(0,1)}</span><span>{code}</span></button></div></header><main className="main-content"><Outlet/></main></div>
+      <div className="content-shell"><header className="topbar"><button className="icon-button mobile-only" onClick={()=>setMobile(true)}>☰</button><div className="topbar-title"><strong>Workforce Management</strong><span>{new Date().toLocaleDateString("en-GB",dateOptions({},false))}</span></div><div className="topbar-actions"><div className="notification-wrap" ref={notificationWrapRef}><button type="button" aria-label="Notifications" aria-expanded={open} aria-controls="header-notification-panel" className="icon-button notification-button" onClick={()=>setOpen(!open)}>🔔{notifs.length>0&&<span className="notification-badge">{notifs.length>99?"99+":notifs.length}</span>}</button>{open&&<div className="notification-popover" id="header-notification-panel" role="region" aria-label="Notifications"><div className="popover-header"><strong>Notifications</strong><div className="notification-header-actions"><button type="button" className="link-button" onClick={()=>{setOpen(false);nav("/module/notifications")}}>View all</button><button type="button" className="notification-close" aria-label="Close notifications" onClick={()=>setOpen(false)}>×</button></div></div>{notifs.length===0?<div className="empty-compact">No unread notifications.</div>:notifs.slice(0,6).map(n=><button type="button" className="notification-item notification-item-button" key={n.id} onClick={()=>openNotification(n)}><strong>{n.title}</strong><span>{n.body}</span>{n?.payload?.route&&<small>Open related action →</small>}</button>)}</div>}</div><button className="profile-chip" onClick={()=>nav("/profile")}><span className="avatar">{code.slice(0,1)}</span><span>{code}</span></button></div></header><main className="main-content"><Outlet/></main></div>
     </div>
   </ActionAlertsContext.Provider>
 }
@@ -192,12 +201,12 @@ function Dashboard(){
   const code=user?.employee_code||user?.employee?.employee_code||"User";
   const get=(keys)=>{for(const k of keys){const v=overview?.[k];if(typeof v==="number")return v;if(Array.isArray(v))return v.length}return "—"};
   const pendingTotal=Object.entries(counts||{}).filter(([k])=>k!=="notifications").reduce((sum,[,v])=>sum+Number(v||0),0);
-  const cards=[["Employees",get(["total_employees","employee_count","employees"])],["Present today",get(["present_today","present_count"])],["My pending actions",pendingTotal],["Alerts",Array.isArray(alerts)?alerts.length:"—"]];
-  return <div className="page"><header className="page-header"><div><span className="eyebrow">Overview</span><h1>Good day, {code}</h1><p>{roles.length?`Signed in as ${roles.join(", ")}.`:"Your workspace is ready."}</p></div>{today&&<div className="today-status"><span>Today</span><strong>{today.status||"Recorded"}</strong></div>}</header><section className="metric-grid">{cards.map(([label,value])=><article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><small>Live workspace information</small></article>)}</section><section className="panel"><div className="panel-header"><div><span className="eyebrow">Quick access</span><h2>Your modules</h2><p>Red badges show unresolved work waiting for your role.</p></div></div><div className="module-grid">{visibleModules(roles).filter(([id])=>id!=="dashboard").map(([id,label,icon])=>{const count=actionCount(counts,id);const href=count>0?`/module/${id}?queue=1`:`/module/${id}`;return <NavLink className="module-card" key={id} to={href}><span className="module-icon">{icon}{count>0&&<span className="module-action-badge dashboard-action-badge">{count>99?"99+":count}</span>}</span><strong>{label}</strong></NavLink>})}</div></section></div>
+  const cards=[["Current employees",get(["employees","total_employees","employee_count"])],["Present today",get(["present_today","present_count"])],["My pending actions",pendingTotal],["Alerts",Array.isArray(alerts)?alerts.length:"—"]];
+  return <div className="page"><header className="page-header"><div><span className="eyebrow">Overview</span><h1>Good day, {code}</h1><p>{roles.length?`Signed in as ${roles.join(", ")}.`:"Your workspace is ready."}</p></div>{today&&<div className="today-status"><span>Today</span><strong>{today.status||"Recorded"}</strong></div>}</header><section className="metric-grid">{cards.map(([label,value])=><article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong><small>{label==="Current employees"&&typeof overview.active_employees==="number"&&typeof overview.disabled_employees==="number" ? `${overview.active_employees} active · ${overview.disabled_employees} disabled / resigned` : "Live workspace information"}</small></article>)}</section><section className="panel"><div className="panel-header"><div><span className="eyebrow">Quick access</span><h2>Your modules</h2><p>Red badges show unresolved work waiting for your role.</p></div></div><div className="module-grid">{visibleModules(roles).filter(([id])=>id!=="dashboard").map(([id,label,icon])=>{const count=actionCount(counts,id);const href=count>0?`/module/${id}?queue=1`:`/module/${id}`;return <NavLink className="module-card" key={id} to={href}><span className="module-icon">{icon}{count>0&&<span className="module-action-badge dashboard-action-badge">{count>99?"99+":count}</span>}</span><strong>{label}</strong></NavLink>})}</div></section></div>
 }
 
 function DataTable({rows}){const data=Array.isArray(rows)?rows:(rows?[rows]:[]); const [query,setQuery]=useState(""); const [page,setPage]=useState(1); const cols=useMemo(()=>{const keys=[...new Set(data.flatMap((r)=>Object.keys(r||{})))]; const pref=["employee_code","name","full_name","title","status","date","created_at"]; return [...pref.filter((k)=>keys.includes(k)),...keys.filter((k)=>!pref.includes(k))].slice(0,9)},[data]); const filtered=data.filter((row)=>!query||Object.values(row||{}).some((v)=>String(typeof v==="object"?JSON.stringify(v):v??"").toLowerCase().includes(query.toLowerCase()))); const size=10,total=Math.max(1,Math.ceil(filtered.length/size)),safe=Math.min(page,total),visible=filtered.slice((safe-1)*size,safe*size); if(!data.length)return <div className="empty-state">No records found.</div>; return <><div className="table-toolbar"><input className="search-input" placeholder="Search records…" value={query} onChange={(e)=>{setQuery(e.target.value);setPage(1)}}/><span>{filtered.length} records</span></div><div className="table-scroll"><table className="data-table"><thead><tr>{cols.map((c)=><th key={c}>{c.replaceAll("_"," ")}</th>)}</tr></thead><tbody>{visible.map((row,i)=><tr key={row?.id||i}>{cols.map((c)=><td key={c}>{formatValue(row?.[c])}</td>)}</tr>)}</tbody></table></div>{total>1&&<div className="pagination"><button className="secondary-button" disabled={safe===1} onClick={()=>setPage(Math.max(1,safe-1))}>Previous</button><span>Page {safe} of {total}</span><button className="secondary-button" disabled={safe===total} onClick={()=>setPage(Math.min(total,safe+1))}>Next</button></div>}</>}
-function formatValue(v){if(v===null||v===undefined||v==="")return "—";if(typeof v==="boolean")return v?"Yes":"No";if(typeof v==="object")return JSON.stringify(v);return String(v)}
+function formatValue(v){if(v===null||v===undefined||v==="")return "—";if(typeof v==="boolean")return v?"Yes":"No";if(typeof v==="object")return JSON.stringify(v);return formatDisplayDate(v)}
 function Record({title,path,refreshKey=0}){const [data,setData]=useState([]); const [error,setError]=useState(""); const [busy,setBusy]=useState(true); async function load(){setBusy(true);setError("");try{setData(await apiRequest(path))}catch(err){setData([]);setError(err.status===403?"This section is restricted for your current role.":err.message)}finally{setBusy(false)}} useEffect(()=>{load()},[path,refreshKey]); return <section className="panel"><div className="panel-header"><div><h2>{title}</h2></div><button className="secondary-button" onClick={load} disabled={busy}>{busy?"Refreshing…":"Refresh"}</button></div>{error&&<div className="warning-banner">{error}</div>}{!error&&(busy?<div className="skeleton-lines"/>:<DataTable rows={data}/>)}</section>}
 
 function useSchema(){const [schema,setSchema]=useState(null);useEffect(()=>{getOpenApi().then(setSchema).catch(()=>{})},[]);return schema}
@@ -328,7 +337,7 @@ function Field({name,spec,value,required,onChange}) {
   return (
     <label>
       {title}{required ? " *" : ""}
-      <input
+      <DateField
         type={type}
         required={required}
         value={value ?? ""}
@@ -576,7 +585,7 @@ function ActionPage({
         </div>
       )}
 
-      {reads.map(([label, path]) => (
+      {reads.map(([label, path]) => path === "/operations/vendors" ? <VendorCatalogue key={path} refreshKey={refresh}/> : (
         <Record
           key={path}
           title={label}
@@ -944,13 +953,13 @@ Enter reason:`
                     <strong>{row.leave_type_name}</strong>
                     <div className="muted">{row.leave_type_code}</div>
                   </td>
-                  <td>{row.start_date}</td>
-                  <td>{row.end_date}</td>
+                  <td>{formatDisplayDate(row.start_date)}</td>
+                  <td>{formatDisplayDate(row.end_date)}</td>
                   <td>{row.total_days}</td>
                   <td>{row.reason || "—"}</td>
                   <td>
                     {row.created_at
-                      ? new Date(row.created_at).toLocaleString()
+                      ? new Date(row.created_at).toLocaleString("en-GB",dateOptions({},true))
                       : "—"}
                   </td>
                   <td>
@@ -1275,7 +1284,7 @@ function PendingRegularizationReview({
                     {row.created_at
                       ? new Date(
                           row.created_at
-                        ).toLocaleString()
+                        ).toLocaleString("en-GB",dateOptions({},true))
                       : "—"}
                   </td>
 
@@ -1558,7 +1567,7 @@ function LeaveApplicationForm({
         <label>
           Start Date *
 
-          <input
+          <DateField
             type="date"
             required
             disabled={busy}
@@ -1576,7 +1585,7 @@ function LeaveApplicationForm({
         <label>
           End Date *
 
-          <input
+          <DateField
             type="date"
             required
             disabled={busy}
@@ -1906,12 +1915,21 @@ function Leave() {
 
 function Expenses(){return <ActionPage title="Expenses & TA/DA" subtitle="Submit travel expenses and manage verification, approval and payment." reads={[["My claims","/expenses/claims/me"],["Pending claims","/expenses/claims/pending"]]} actions={[["Create claim","POST","/expenses/claims"],["Submit claim","POST","/expenses/claims/{claim_id}/submit"],["Verify claim","POST","/expenses/claims/{claim_id}/verify"],["Approve claim","POST","/expenses/claims/{claim_id}/approve"],["Reject claim","POST","/expenses/claims/{claim_id}/reject"],["Mark paid","POST","/expenses/claims/{claim_id}/mark-paid"]]}/>}
 
-function Documents(){const [form,setForm]=useState({owner_type:"GENERAL",owner_id:"",category:"GENERAL",title:"",description:"",issue_date:"",expiry_date:"",alert_days_before:30,is_confidential:false});const [file,setFile]=useState(null);const [progress,setProgress]=useState(0);const [status,setStatus]=useState("");const [error,setError]=useState("");const [refresh,setRefresh]=useState(0);async function upload(e){e.preventDefault();if(!file){setError("Choose a PDF or image first.");return}setError("");setStatus("Preparing upload…");try{const payload={...form,owner_id:form.owner_id||null,issue_date:form.issue_date||null,expiry_date:form.expiry_date||null,file_name:file.name,content_type:file.type||"application/octet-stream",file_size:file.size,extra_data:null};const pre=await apiRequest("/documents/presign-upload",{method:"POST",body:payload});setStatus("Uploading to secure storage…");const etag=await uploadWithProgress(pre.upload_url,file,payload.content_type,setProgress);await apiRequest(`/documents/${pre.document_id}/complete`,{method:"POST",body:{etag:etag?etag.replaceAll('"',""):null}});setStatus("Upload completed.");setProgress(100);setFile(null);setRefresh((x)=>x+1)}catch(err){setError(err.message);setStatus("")}} return <div className="page"><header className="page-header"><div><span className="eyebrow">Secure files</span><h1>Documents</h1><p>Upload private documents, track expiry dates and submit records for approval.</p></div></header><section className="panel"><div className="panel-header"><div><h2>Upload document</h2><p>Direct private S3 upload using a temporary secure URL.</p></div></div><form className="document-form" onSubmit={upload}>{error&&<div className="error-banner">{error}</div>}{status&&<div className="success-banner">{status}</div>}<div className="form-grid"><label>Owner type<select value={form.owner_type} onChange={(e)=>setForm({...form,owner_type:e.target.value})}>{["GENERAL","EMPLOYEE","VEHICLE","PROPERTY","OUTLET","EXPENSE","MD_REFERENCE"].map((v)=><option key={v}>{v}</option>)}</select></label><label>Owner ID<input value={form.owner_id} placeholder="Optional UUID" onChange={(e)=>setForm({...form,owner_id:e.target.value})}/></label><label>Category<input value={form.category} onChange={(e)=>setForm({...form,category:e.target.value.toUpperCase()})}/></label><label>Title<input required value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})}/></label><label>Issue date<input type="date" value={form.issue_date} onChange={(e)=>setForm({...form,issue_date:e.target.value})}/></label><label>Expiry date<input type="date" value={form.expiry_date} onChange={(e)=>setForm({...form,expiry_date:e.target.value})}/></label></div><label>Description<textarea rows="3" value={form.description} onChange={(e)=>setForm({...form,description:e.target.value})}/></label><label className="file-drop">Choose PDF or image<input type="file" accept=".pdf,image/*" onChange={(e)=>setFile(e.target.files?.[0]||null)}/><span>{file?`${file.name} · ${Math.round(file.size/1024)} KB`:"Select a file from your computer"}</span></label>{progress>0&&<div className="progress-bar"><span style={{width:`${progress}%`}}/></div>}<button className="primary-button">Upload document</button></form></section><Record title="Document library" path="/documents" refreshKey={refresh}/><Record title="Expiring documents" path="/documents?expiring_only=true" refreshKey={refresh}/></div>}
+function Documents(){const [form,setForm]=useState({owner_type:"GENERAL",owner_id:"",category:"GENERAL",title:"",description:"",issue_date:"",expiry_date:"",alert_days_before:30,is_confidential:false});const [file,setFile]=useState(null);const [progress,setProgress]=useState(0);const [status,setStatus]=useState("");const [error,setError]=useState("");const [refresh,setRefresh]=useState(0);async function upload(e){e.preventDefault();if(!file){setError("Choose a PDF or image first.");return}setError("");setStatus("Preparing upload…");try{const payload={...form,owner_id:form.owner_id||null,issue_date:form.issue_date||null,expiry_date:form.expiry_date||null,file_name:file.name,content_type:file.type||"application/octet-stream",file_size:file.size,extra_data:null};const pre=await apiRequest("/documents/presign-upload",{method:"POST",body:payload});setStatus("Uploading to secure storage…");const etag=await uploadWithProgress(pre.upload_url,file,payload.content_type,setProgress);await apiRequest(`/documents/${pre.document_id}/complete`,{method:"POST",body:{etag:etag?etag.replaceAll('"',""):null}});setStatus("Upload completed.");setProgress(100);setFile(null);setRefresh((x)=>x+1)}catch(err){setError(err.message);setStatus("")}} return <div className="page"><header className="page-header"><div><span className="eyebrow">Secure files</span><h1>Documents</h1><p>Upload private documents, track expiry dates and submit records for approval.</p></div></header><section className="panel"><div className="panel-header"><div><h2>Upload document</h2><p>Direct private S3 upload using a temporary secure URL.</p></div></div><form className="document-form" onSubmit={upload}>{error&&<div className="error-banner">{error}</div>}{status&&<div className="success-banner">{status}</div>}<div className="form-grid"><label>Owner type<select value={form.owner_type} onChange={(e)=>setForm({...form,owner_type:e.target.value})}>{["GENERAL","EMPLOYEE","VEHICLE","PROPERTY","OUTLET","EXPENSE","MD_REFERENCE"].map((v)=><option key={v}>{v}</option>)}</select></label><label>Owner ID<input value={form.owner_id} placeholder="Optional UUID" onChange={(e)=>setForm({...form,owner_id:e.target.value})}/></label><label>Category<input value={form.category} onChange={(e)=>setForm({...form,category:e.target.value.toUpperCase()})}/></label><label>Title<input required value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})}/></label><label>Issue date<DateField type="date" value={form.issue_date} onChange={(e)=>setForm({...form,issue_date:e.target.value})}/></label><label>Expiry date<DateField type="date" value={form.expiry_date} onChange={(e)=>setForm({...form,expiry_date:e.target.value})}/></label></div><label>Description<textarea rows="3" value={form.description} onChange={(e)=>setForm({...form,description:e.target.value})}/></label><label className="file-drop">Choose PDF or image<input type="file" accept=".pdf,image/*" onChange={(e)=>setFile(e.target.files?.[0]||null)}/><span>{file?`${file.name} · ${Math.round(file.size/1024)} KB`:"Select a file from your computer"}</span></label>{progress>0&&<div className="progress-bar"><span style={{width:`${progress}%`}}/></div>}<button className="primary-button">Upload document</button></form></section><Record title="Document library" path="/documents" refreshKey={refresh}/><Record title="Expiring documents" path="/documents?expiring_only=true" refreshKey={refresh}/></div>}
 
-function Notifications(){const nav=useNavigate();const [items,setItems]=useState([]);const [error,setError]=useState("");async function load(){try{const data=await apiRequest("/background/notifications/me");setItems(Array.isArray(data)?data:[])}catch(err){setError(err.message)}}useEffect(()=>{load()},[]);async function mark(id){try{await apiRequest(`/background/notifications/${id}/read`,{method:"POST"});await load();window.dispatchEvent(new Event("action-alerts:refresh"))}catch(err){setError(err.message)}}async function openRelated(n){try{if(!n.read_at)await apiRequest(`/background/notifications/${n.id}/read`,{method:"POST"});window.dispatchEvent(new Event("action-alerts:refresh"));nav(n?.payload?.route||"/module/notifications")}catch(err){setError(err.message)}}return <div className="page"><header className="page-header"><div><span className="eyebrow">Updates</span><h1>Notifications</h1><p>Approvals, renewals, assignments and workflow updates.</p></div><button className="secondary-button" onClick={load}>Refresh</button></header>{error&&<div className="error-banner">{error}</div>}<div className="notification-list">{items.length===0?<div className="empty-state">No notifications yet.</div>:items.map((n)=><article className={`notification-card ${n.read_at?"read":""}`} key={n.id}><div><strong>{n.title}</strong><p>{n.body}</p><small>{n.created_at?new Date(n.created_at).toLocaleString():""}</small></div><div className="header-actions">{n?.payload?.route&&<button className="primary-button" onClick={()=>openRelated(n)}>Open</button>}{!n.read_at&&<button className="secondary-button" onClick={()=>mark(n.id)}>Mark read</button>}</div></article>)}</div></div>}
+function Notifications(){return <NotificationInbox/>}
 function Profile(){const {user,roles}=useAuth();const [form,setForm]=useState({current_password:"",new_password:""});const [msg,setMsg]=useState("");const [error,setError]=useState("");async function submit(e){e.preventDefault();setMsg("");setError("");try{await apiRequest("/auth/change-password",{method:"POST",body:form});setMsg("Password changed successfully.");setForm({current_password:"",new_password:""})}catch(err){setError(err.message)}}return <div className="page"><header className="page-header"><div><span className="eyebrow">Account</span><h1>My profile</h1><p>Account information and password security.</p></div></header><div className="two-column"><section className="panel"><h2>Account</h2><pre className="profile-data">{JSON.stringify({...user,roles},null,2)}</pre></section><section className="panel"><h2>Change password</h2><form className="schema-form" onSubmit={submit}>{error&&<div className="error-banner">{error}</div>}{msg&&<div className="success-banner">{msg}</div>}<label>Current password<input type="password" required value={form.current_password} onChange={(e)=>setForm({...form,current_password:e.target.value})}/></label><label>New password<input type="password" required minLength="8" value={form.new_password} onChange={(e)=>setForm({...form,new_password:e.target.value})}/></label><button className="primary-button">Change password</button></form></section></div></div>}
 
-function Module(){const {moduleId}=useParams();if(moduleId==="box-loading")return <BoxLoadingWorkspace/>;if(moduleId==="shop-rentals")return <ShopRentalsWorkspace/>;if(moduleId==="security")return <SecurityWorkspace/>;if(moduleId==="overtime")return <OvertimeWorkspace/>;if(moduleId==="md-overview")return <MdDailyOverview/>;if(moduleId==="sheet-verification")return <AccountsSheetWorkspace/>;if(moduleId==="vendor-access")return <VendorAccountsWorkspace/>; if(moduleId==="appointments")return <AppointmentWorkspace/>; if(moduleId==="assets")return <AssetWorkspace/>; if(moduleId==="payroll") return <PayrollWorkspace/>; if(moduleId==="expenses") return <ExpensesWorkspace/>; if(moduleId==="fuel")return <FuelWorkspace/>; if(moduleId === "maintenance-bills") 
+function Module(){const {moduleId}=useParams();if(moduleId==="financial-records")return <FinancialRecordsWorkspace/>;if(moduleId==="cashbook")return <CashbookWorkspace/>;if(moduleId==="box-loading")return <BoxLoadingWorkspace/>;if(moduleId==="shop-rentals")return <ShopRentalsWorkspace/>;if(moduleId==="security")return <SecurityWorkspace/>;if(moduleId==="overtime")return <OvertimeWorkspace/>;if(moduleId==="md-overview")return <MdDailyOverview/>;if(moduleId==="sheet-verification")return <AccountsSheetWorkspace/>;if(moduleId==="vendor-access")return <VendorAccountsWorkspace/>; if(moduleId==="appointments")return <AppointmentWorkspace/>; if(moduleId==="assets")return <AssetWorkspace/>; if(moduleId==="payroll") return <PayrollWorkspace/>; if(moduleId==="expenses") return <ExpensesWorkspace/>; if(moduleId==="fuel")return <FuelWorkspace/>; if(moduleId === "maintenance-bills") 
   return <MaintenanceBillsWorkspace />; if(moduleId==="approvals")return <ApprovalWorkspace/>; if(moduleId==="employees")return <EmployeeWorkspace/>;if(moduleId==="attendance")return <AttendanceWorkspace/>;if(moduleId==="tasks")return <TasksWorkspace/>;;if(moduleId==="inspections")return <InspectionWorkspace/>;if(moduleId==="leave")return <Leave/>;if(moduleId==="expenses")return <Expenses/>;if(moduleId==="documents")return <Documents/>;if(moduleId==="notifications")return <Notifications/>;if(moduleId==="outlets")return <OutletsWorkspace/>;const cfg=generic[moduleId];return cfg?<ActionPage {...cfg}/>:<div className="page"><div className="empty-state">Module configuration not found.</div></div>}
 
 export default function App(){return <Routes><Route path="/vendor-login" element={<VendorPortal/>}/><Route path="/vendor" element={<VendorPortal/>}/><Route path="/login" element={<Login/>}/><Route path="/vendor-inspection/:token" element={<VendorInspectionReview/>}/><Route element={<Protected/>}><Route element={<Shell/>}><Route index element={<Navigate to="/dashboard" replace/>}/><Route path="/dashboard" element={<Dashboard/>}/><Route path="/profile" element={<Profile/>}/><Route path="/module/:moduleId" element={<Module/>}/></Route></Route><Route path="*" element={<Navigate to="/dashboard" replace/>}/></Routes>}
+
+// financial-records-update-v1
+
+// navigation-codes-update-v1
+
+// attendance-notifications-cleanup-v1
+
+// dashboard-catalogue-count-v1
+// date-display-ddmmyyyy-v1

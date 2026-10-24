@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useEffect,useMemo,useState} from "react";
 import {useAuth} from "./context/AuthContext";
 import {apiRequest,uploadWithProgress} from "./lib/api";
@@ -327,7 +329,7 @@ export default function ShopRentalsWorkspace(){
             <div className="panel-header">
               <div>
                 <strong>{type==="rental"?"Rental advance refund":"Vendor deposit refund"}</strong>
-                <p>{money(row.amount)} - {row.payment_mode} - {row.refund_date}</p>
+                <p>{money(row.amount)} - {row.payment_mode} - {formatDisplayDate(row.refund_date)}</p>
               </div>
               <span className="inspection-status">{statusText(row.status)}</span>
             </div>
@@ -348,12 +350,12 @@ export default function ShopRentalsWorkspace(){
         <label>Building Code<input value={rentalForm.building_code} onChange={e=>setRentalForm({...rentalForm,building_code:e.target.value})}/></label>
         <label>Party Name<input required value={rentalForm.counterparty_name} onChange={e=>setRentalForm({...rentalForm,counterparty_name:e.target.value})}/></label>
         <label>Party Contact<input value={rentalForm.counterparty_contact} onChange={e=>setRentalForm({...rentalForm,counterparty_contact:e.target.value})}/></label>
-        <label>Agreement Start<input type="date" required value={rentalForm.agreement_start_date} onChange={e=>setRentalForm({...rentalForm,agreement_start_date:e.target.value})}/></label>
-        <label>Agreement End<input type="date" value={rentalForm.agreement_end_date} onChange={e=>setRentalForm({...rentalForm,agreement_end_date:e.target.value})}/></label>
+        <label>Agreement Start<DateField type="date" required value={rentalForm.agreement_start_date} onChange={e=>setRentalForm({...rentalForm,agreement_start_date:e.target.value})}/></label>
+        <label>Agreement End<DateField type="date" value={rentalForm.agreement_end_date} onChange={e=>setRentalForm({...rentalForm,agreement_end_date:e.target.value})}/></label>
         <label>Monthly Rent<input type="number" min="0" step="0.01" required value={rentalForm.monthly_rent_amount} onChange={e=>setRentalForm({...rentalForm,monthly_rent_amount:e.target.value})}/></label>
         <label>Advance Amount<input type="number" min="0" step="0.01" value={rentalForm.advance_amount} onChange={e=>setRentalForm({...rentalForm,advance_amount:e.target.value})}/></label>
         <label>Advance Mode<select value={rentalForm.advance_payment_mode} onChange={e=>setRentalForm({...rentalForm,advance_payment_mode:e.target.value})}><option>CASH</option><option>UPI</option><option>CHEQUE</option><option>BANK_TRANSFER</option></select></label>
-        <label>Advance Paid On<input type="date" value={rentalForm.advance_paid_on} onChange={e=>setRentalForm({...rentalForm,advance_paid_on:e.target.value})}/></label>
+        <label>Advance Paid On<DateField type="date" value={rentalForm.advance_paid_on} onChange={e=>setRentalForm({...rentalForm,advance_paid_on:e.target.value})}/></label>
         <label>Advance Reference<input value={rentalForm.advance_reference} onChange={e=>setRentalForm({...rentalForm,advance_reference:e.target.value})}/></label>
         <label className="full-span">Address<textarea value={rentalForm.address} onChange={e=>setRentalForm({...rentalForm,address:e.target.value})}/></label>
         <FileField label="Agreement Document" file={agreementFile} setFile={setAgreementFile} progress={progress.agreement||0}/>
@@ -374,7 +376,7 @@ export default function ShopRentalsWorkspace(){
         <label>Category<input value={vendorForm.service_category} onChange={e=>setVendorForm({...vendorForm,service_category:e.target.value})}/></label>
         <label>Deposit Amount<input type="number" min="0" step="0.01" value={vendorForm.deposit_amount} onChange={e=>setVendorForm({...vendorForm,deposit_amount:e.target.value})}/></label>
         <label>Deposit Mode<select value={vendorForm.deposit_payment_mode} onChange={e=>setVendorForm({...vendorForm,deposit_payment_mode:e.target.value})}><option>CASH</option><option>UPI</option><option>CHEQUE</option><option>BANK_TRANSFER</option></select></label>
-        <label>Deposit Date<input type="date" value={vendorForm.deposit_received_on} onChange={e=>setVendorForm({...vendorForm,deposit_received_on:e.target.value})}/></label>
+        <label>Deposit Date<DateField type="date" value={vendorForm.deposit_received_on} onChange={e=>setVendorForm({...vendorForm,deposit_received_on:e.target.value})}/></label>
         <label>Deposit Reference<input value={vendorForm.deposit_reference} onChange={e=>setVendorForm({...vendorForm,deposit_reference:e.target.value})}/></label>
         <FileField label="Deposit Supporting Document" file={vendorDepositFile} setFile={setVendorDepositFile} progress={progress.vendorDeposit||0}/>
         <label className="full-span">Notes<textarea value={vendorForm.notes} onChange={e=>setVendorForm({...vendorForm,notes:e.target.value})}/></label>
@@ -390,7 +392,7 @@ export default function ShopRentalsWorkspace(){
           <label>Rental<select required value={rentalRefund.target_id} onChange={e=>setRentalRefund({...rentalRefund,target_id:e.target.value})}><option value="">Select rental...</option>{rentals.map(r=><option key={r.id} value={r.id}>{r.building_name} - {statusText(r.rental_type)}</option>)}</select></label>
           <label>Amount<input type="number" min="0" step="0.01" required value={rentalRefund.amount} onChange={e=>setRentalRefund({...rentalRefund,amount:e.target.value})}/></label>
           <label>Mode<select value={rentalRefund.payment_mode} onChange={e=>setRentalRefund({...rentalRefund,payment_mode:e.target.value})}><option>CASH</option><option>UPI</option><option>CHEQUE</option><option>BANK_TRANSFER</option></select></label>
-          <label>Refund Date<input type="date" required value={rentalRefund.refund_date} onChange={e=>setRentalRefund({...rentalRefund,refund_date:e.target.value})}/></label>
+          <label>Refund Date<DateField type="date" required value={rentalRefund.refund_date} onChange={e=>setRentalRefund({...rentalRefund,refund_date:e.target.value})}/></label>
           <label>Reference<input value={rentalRefund.payment_reference} onChange={e=>setRentalRefund({...rentalRefund,payment_reference:e.target.value})}/></label>
           <label>Reason<textarea required value={rentalRefund.reason} onChange={e=>setRentalRefund({...rentalRefund,reason:e.target.value})}/></label>
           <FileField label="Refund Supporting Document" file={rentalRefundFile} setFile={setRentalRefundFile} progress={progress.rentalRefund||0}/>
@@ -401,7 +403,7 @@ export default function ShopRentalsWorkspace(){
           <label>Vendor<select required value={vendorRefund.target_id} onChange={e=>setVendorRefund({...vendorRefund,target_id:e.target.value})}><option value="">Select vendor...</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.code} - {v.name}</option>)}</select></label>
           <label>Amount<input type="number" min="0" step="0.01" required value={vendorRefund.amount} onChange={e=>setVendorRefund({...vendorRefund,amount:e.target.value})}/></label>
           <label>Mode<select value={vendorRefund.payment_mode} onChange={e=>setVendorRefund({...vendorRefund,payment_mode:e.target.value})}><option>CASH</option><option>UPI</option><option>CHEQUE</option><option>BANK_TRANSFER</option></select></label>
-          <label>Refund Date<input type="date" required value={vendorRefund.refund_date} onChange={e=>setVendorRefund({...vendorRefund,refund_date:e.target.value})}/></label>
+          <label>Refund Date<DateField type="date" required value={vendorRefund.refund_date} onChange={e=>setVendorRefund({...vendorRefund,refund_date:e.target.value})}/></label>
           <label>Reference<input value={vendorRefund.payment_reference} onChange={e=>setVendorRefund({...vendorRefund,payment_reference:e.target.value})}/></label>
           <label>Reason<textarea required value={vendorRefund.reason} onChange={e=>setVendorRefund({...vendorRefund,reason:e.target.value})}/></label>
           <FileField label="Refund Supporting Document" file={vendorRefundFile} setFile={setVendorRefundFile} progress={progress.vendorRefund||0}/>
@@ -412,7 +414,7 @@ export default function ShopRentalsWorkspace(){
 
     <section className="panel">
       <div className="panel-header"><div><span className="eyebrow">Records</span><h2>Rental Register</h2></div></div>
-      {rentals.length===0?<div className="empty-state">No shop rental records yet.</div>:<div className="table-scroll"><table className="data-table"><thead><tr><th>Building</th><th>Type</th><th>Party</th><th>Agreement</th><th>Rent</th><th>Advance</th><th>Status</th><th>Docs</th></tr></thead><tbody>{rentals.map(r=><tr key={r.id}><td><strong>{r.building_name}</strong><div className="muted">{r.building_code||"No code"}</div></td><td>{statusText(r.rental_type)}</td><td>{r.counterparty_name}</td><td>{r.agreement_start_date} to {r.agreement_end_date||"open"}</td><td>{money(r.monthly_rent_amount)}</td><td>{money(r.advance_amount)}</td><td>{statusText(r.status)}</td><td><div className="action-strip">{r.agreement_document_id&&<><button className="secondary-button" onClick={()=>previewDoc(r.agreement_document_id)}>Agreement</button><button className="secondary-button" onClick={()=>downloadDoc(r.agreement_document_id)}>Download</button></>}{r.advance_document_id&&<><button className="secondary-button" onClick={()=>previewDoc(r.advance_document_id)}>Advance</button><button className="secondary-button" onClick={()=>downloadDoc(r.advance_document_id)}>Download</button></>}</div></td></tr>)}</tbody></table></div>}
+      {rentals.length===0?<div className="empty-state">No shop rental records yet.</div>:<div className="table-scroll"><table className="data-table"><thead><tr><th>Building</th><th>Type</th><th>Party</th><th>Agreement</th><th>Rent</th><th>Advance</th><th>Status</th><th>Docs</th></tr></thead><tbody>{rentals.map(r=><tr key={r.id}><td><strong>{r.building_name}</strong><div className="muted">{r.building_code||"No code"}</div></td><td>{statusText(r.rental_type)}</td><td>{r.counterparty_name}</td><td>{formatDisplayDate(r.agreement_start_date)} to {r.agreement_end_date||"open"}</td><td>{money(r.monthly_rent_amount)}</td><td>{money(r.advance_amount)}</td><td>{statusText(r.status)}</td><td><div className="action-strip">{r.agreement_document_id&&<><button className="secondary-button" onClick={()=>previewDoc(r.agreement_document_id)}>Agreement</button><button className="secondary-button" onClick={()=>downloadDoc(r.agreement_document_id)}>Download</button></>}{r.advance_document_id&&<><button className="secondary-button" onClick={()=>previewDoc(r.advance_document_id)}>Advance</button><button className="secondary-button" onClick={()=>downloadDoc(r.advance_document_id)}>Download</button></>}</div></td></tr>)}</tbody></table></div>}
     </section>
 
     <section className="panel">
@@ -421,3 +423,4 @@ export default function ShopRentalsWorkspace(){
     </section>
   </div>
 }
+// date-display-ddmmyyyy-v1

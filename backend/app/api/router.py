@@ -88,3 +88,18 @@ api_router.include_router(task_workday_support_router)
 
 from app.api.routes.box_loading import router as box_loading_router
 api_router.include_router(box_loading_router)
+
+from app.api.routes.catalogue import router as catalogue_router
+api_router.include_router(catalogue_router)
+
+from app.api.routes.cashbook import router as cashbook_router
+api_router.include_router(cashbook_router)
+
+# attendance-grid-update-v1
+from app.api.routes.workforce_improvements import router as workforce_improvements_router
+api_router.include_router(workforce_improvements_router)
+
+from app.api.routes.financial_records import router as financial_records_router
+api_router.include_router(financial_records_router)
+
+# financial-records-update-v1

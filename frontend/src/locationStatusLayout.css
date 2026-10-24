@@ -1,0 +1,11 @@
+/* Status text participates in normal flow, never overlays the person's name. */
+.attendance-map-list article{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0}
+.attendance-map-list .attendance-person{min-width:0;align-items:flex-start}
+.attendance-map-list .attendance-person>span:not(.attendance-avatar){min-width:0;flex:1}
+.attendance-map-list .attendance-person strong,.attendance-map-list .attendance-person small{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.attendance-map-list article .location-signal{position:static;display:block;align-self:flex-start;max-width:100%;margin:0;padding:4px 8px;border-radius:6px;background:#f1f5f9;line-height:1.5;white-space:normal;overflow-wrap:anywhere;font-size:11px}
+.attendance-map-list article>small{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.attendance-map-list .location-signal.live{background:#e8f8ee;color:#126b38}
+.attendance-map-list .location-signal.offline{color:#526174}
+
+.attendance-map-list .attendance-avatar{flex:0 0 auto}

@@ -1,3 +1,4 @@
+from typing import Literal
 from datetime import date
 from uuid import UUID
 
@@ -40,6 +41,8 @@ def validate_strong_password(value: str) -> str:
 class EmployeeCreate(BaseModel):
     """Data required to create a login user and employee profile."""
 
+    employee_code_mode: Literal["AUTO", "MANUAL"] = "AUTO"
+    code_reservation_id: UUID | None = None
     employee_code: str = Field(min_length=2, max_length=50)
     email: str | None = Field(default=None, max_length=255)
     temporary_password: str = Field(min_length=10, max_length=128)
@@ -312,3 +315,7 @@ class EmployeeResponse(BaseModel):
     designation: NamedEntitySummary | None
     manager_id: UUID | None
     role_codes: list[str]
+
+# attendance-grid-update-v1
+
+# manual-employee-code-v1

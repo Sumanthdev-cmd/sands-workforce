@@ -117,6 +117,7 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
 
 
 ROLE_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
+    ("CASHIER", "Cashier", "Records organisation credits and debits with supporting documents."),
     (
         "MD",
         "Managing Director",
@@ -171,6 +172,7 @@ ROLE_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
 
 
 ROLE_PERMISSION_CODES: dict[str, set[str]] = {
+    "CASHIER": set(),
     "MD": {
         permission_code
         for permission_code, _, _ in PERMISSION_DEFINITIONS

@@ -1,3 +1,4 @@
+import DateField from "./DateField";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -1096,7 +1097,7 @@ export default function MaintenanceBillsWorkspace() {
               <label>
                 Bill Date *
 
-                <input
+                <DateField
                   type="date"
                   required
                   disabled={busy}
@@ -1115,7 +1116,7 @@ export default function MaintenanceBillsWorkspace() {
               <label>
                 Due Date
 
-                <input
+                <DateField
                   type="date"
                   disabled={busy}
                   value={form.due_date}
@@ -1577,3 +1578,4 @@ export default function MaintenanceBillsWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

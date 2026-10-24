@@ -1,8 +1,10 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {apiRequest} from "./lib/api";
 
-const dateTime = value => value ? new Date(value).toLocaleString() : "—";
-const dateOnly = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString() : "—";
+const dateTime = value => value ? new Date(value).toLocaleString("en-GB",dateOptions({},true)) : "—";
+const dateOnly = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-GB",dateOptions({},false)) : "—";
 const readable = value => String(value || "—").replaceAll("_", " ");
 
 export default function TeamAssignments({reloadKey, onActivity}) {
@@ -53,8 +55,8 @@ export default function TeamAssignments({reloadKey, onActivity}) {
       <label className="team-status-filter">Status<select value={filters.assignment_status} onChange={e => filter("assignment_status", e.target.value)}>
         <option value="">All statuses</option>{["ASSIGNED", "IN_PROGRESS", "COMPLETED", "OVERDUE", "COMPLETED_LATE", "CANCELLED"].map(s => <option key={s} value={s}>{readable(s)}</option>)}
       </select></label>
-      <label>Scheduled from<input type="date" value={filters.start_date} onChange={e => filter("start_date", e.target.value)}/></label>
-      <label>Scheduled to<input type="date" value={filters.end_date} onChange={e => filter("end_date", e.target.value)}/></label>
+      <label>Scheduled from<DateField type="date" value={filters.start_date} onChange={e => filter("start_date", e.target.value)}/></label>
+      <label>Scheduled to<DateField type="date" value={filters.end_date} onChange={e => filter("end_date", e.target.value)}/></label>
     </div>
     {error && <div className="error-banner" role="alert">{error}</div>}
     <p className="muted" aria-live="polite">{data.total} assignment{data.total === 1 ? "" : "s"}{loading ? " · Updating…" : ""}</p>
@@ -96,3 +98,4 @@ export default function TeamAssignments({reloadKey, onActivity}) {
     <p className="muted">“Sent to Firebase” confirms the sending service accepted the alert. Display and sound also depend on the phone's notification settings.</p>
   </section>;
 }
+// date-display-ddmmyyyy-v1

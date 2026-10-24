@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import {displayDate,parseDisplayDate,dateOptions} from "../src/lib/displayDates.js";
+assert.equal(displayDate("2026-10-05"),"05/10/2026");
+assert.equal(displayDate("2026-01-02"),"02/01/2026");
+assert.equal(displayDate(""),"—");
+assert.equal(displayDate("CASH001"),"CASH001");
+assert.equal(parseDisplayDate("29/02/2024"),"2024-02-29");
+assert.equal(parseDisplayDate("29/02/2026"),null);
+assert.equal(parseDisplayDate("31/04/2026"),null);
+assert.equal(parseDisplayDate("12/31/2026"),null);
+assert.equal(parseDisplayDate("01/01/0000"),null);
+assert.equal(parseDisplayDate("24/10/2026"),"2026-10-24");
+assert.equal(new Date("2026-10-05T12:00:00Z").toLocaleDateString("en-GB",dateOptions({timeZone:"Asia/Kolkata"})),"05/10/2026");
+const options=dateOptions({timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"},true);
+assert.equal(options.timeZone,"Asia/Kolkata");assert.ok(!options.dateStyle&&!options.timeStyle);
+assert.match(new Date("2026-10-05T12:00:00Z").toLocaleString("en-GB",options),/^05\/10\/2026/);
+assert.deepEqual(dateOptions({weekday:"short"}),{weekday:"short"});
+console.log("14 date formatting/parsing assertions passed");

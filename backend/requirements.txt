@@ -63,3 +63,5 @@ websockets==17.0.1
 boto3
 apscheduler
 firebase-admin
+
+reportlab==4.4.9

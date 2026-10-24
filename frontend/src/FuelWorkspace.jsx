@@ -1,3 +1,5 @@
+import DateField from "./DateField";
+import {displayDate as formatDisplayDate,dateOptions} from "./lib/displayDates";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest, uploadWithProgress } from "./lib/api";
 
@@ -886,7 +888,7 @@ export default function FuelWorkspace() {
               <label>
                 Fuel Date & Time *
 
-                <input
+                <DateField
                   required
                   type="datetime-local"
                   disabled={busy}
@@ -1246,7 +1248,7 @@ export default function FuelWorkspace() {
                             {row.fuel_date
                               ? new Date(
                                   row.fuel_date
-                                ).toLocaleString()
+                                ).toLocaleString("en-GB",dateOptions({},true))
                               : "Not fueled"}
                           </div>
                         </td>
@@ -1369,3 +1371,4 @@ export default function FuelWorkspace() {
     </div>
   );
 }
+// date-display-ddmmyyyy-v1

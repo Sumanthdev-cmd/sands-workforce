@@ -81,11 +81,15 @@ Firebase client configuration, server credentials, JWT signing secrets, database
 - Responsive forms and notification panels for smaller screens.
 - Source updates with preflight checks, backups and service-readiness checks.
 
+## Latest updates
+
+See [updates through 24 October 2026](docs/UPDATES_2026_10_24.md) for the integrated workforce, cashier, attendance, financial download and payroll changes, setup requirements and validation.
+
 ## Project status
 
 This is an actively developed operations application and a source-code portfolio. It is not a claim of an independent security audit or universal Android device certification. Fresh-environment migration setup, physical-device behaviour and configured cloud integrations should be validated for each deployment.
 
-For this source snapshot, all 199 backend Python files passed syntax checks and the frontend production build completed from the committed npm lockfile. The frontend build reports a large-bundle warning; route-based code splitting is a future improvement. See the snapshot notes for validation scope.
+For the original source snapshot, all 199 backend Python files passed syntax checks and the frontend production build completed from the committed npm lockfile. The frontend build reports a large-bundle warning; route-based code splitting is a future improvement. See the snapshot notes for validation scope.
 
 The public repository backs up application source. Operational databases, uploaded documents, employee/bank details, location history, credentials, logs and private deployment backups are maintained separately.
 

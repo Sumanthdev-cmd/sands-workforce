@@ -25,6 +25,7 @@ from app.services.background_service import (
 from app.services.notification_service import (
     list_executions,
     list_my_notifications,
+    delete_read_notifications,
     mark_read,
 )
 from app.services.workforce_policy_service import enqueue_policy_escalations
@@ -199,3 +200,10 @@ def read_job_executions(
     database: DatabaseSession,
 ):
     return list_executions(database, current_user)
+
+
+@router.delete("/notifications/read")
+def delete_my_read_notifications(current_user: CurrentUser, database: DatabaseSession):
+    return delete_read_notifications(database, current_user)
+
+# attendance-notifications-cleanup-v1

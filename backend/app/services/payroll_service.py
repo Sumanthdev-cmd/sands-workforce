@@ -1,3 +1,5 @@
+from app.services.catalogue_service import catalogue_visible
+from app.services.payroll_eligibility import has_remuneration
 from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -1105,7 +1107,7 @@ def payroll_employee_rows(
         database.execute(
             select(Employee, User)
             .join(User, Employee.user_id == User.id)
-            .where(Employee.organization_id == organization_id)
+            .where(Employee.organization_id == organization_id, catalogue_visible("employees", "employee"))
             .order_by(User.employee_code)
         ).all()
     )
@@ -1164,12 +1166,12 @@ def payroll_eligible_vendor_count(
     database: Session,
     organization_id: UUID,
     period_end: date,
+    period_start: date,
 ) -> int:
-    return sum(
-        1
-        for vendor in payroll_vendor_rows(database, organization_id)
-        if effective_vendor_structure(database, organization_id, vendor.id, period_end) is not None
-    )
+    dates = get_vendor_working_dates(database, organization_id, period_start, period_end)
+    return sum(any(has_remuneration(s) for s, _ in effective_vendor_structure_segments(
+        database, organization_id, v.id, period_start, period_end, dates))
+        for v in payroll_vendor_rows(database, organization_id))
 
 
 def validate_payroll_ready_for_calculation(
@@ -1269,11 +1271,9 @@ def validate_payroll_ready_for_submission(
             ),
         )
 
-    employee_count = len(
-        payroll_employee_rows(
-            database,
-            user.organization_id,
-        )
+    employee_count = sum(
+        has_remuneration(effective_structure(database, user.organization_id, e.id, payroll_run.period_end))
+        for e, _ in payroll_employee_rows(database, user.organization_id)
     )
 
     if payroll_run.total_employees != employee_count:
@@ -1288,9 +1288,7 @@ def validate_payroll_ready_for_submission(
         )
 
     vendor_count = payroll_eligible_vendor_count(
-        database,
-        user.organization_id,
-        payroll_run.period_end,
+        database, user.organization_id, payroll_run.period_end, payroll_run.period_start,
     )
     if payroll_run.total_vendors != vendor_count:
         raise HTTPException(
@@ -1360,7 +1358,8 @@ def calculate_payroll_run(
     employees = list(
         database.scalars(
             select(Employee).where(
-                Employee.organization_id == user.organization_id
+                Employee.organization_id == user.organization_id,
+                catalogue_visible("employees", "employee"),
             )
         ).all()
     )
@@ -1375,7 +1374,7 @@ def calculate_payroll_run(
             employee.id,
             payroll_run.period_end,
         )
-        if structure is None:
+        if not has_remuneration(structure):
             continue
 
         paid_days = payable_days(
@@ -1549,7 +1548,7 @@ def calculate_payroll_run(
             payroll_run.period_end,
             vendor_dates,
         )
-        if not segments:
+        if not any(has_remuneration(structure) for structure, _ in segments):
             continue
 
         latest_structure = segments[-1][0]
@@ -1802,6 +1801,11 @@ def _approve_and_finalize_payroll(
     payroll_run.approval_note = note
     payroll_run.finalized_by_user_id = user.id
     payroll_run.finalized_at = now
+    from app.services.payroll_advance_summary import snapshot_run
+    try:
+        snapshot_run(database, payroll_run)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     finalize_salary_advance_recoveries(
         database,
         user=user,
@@ -2088,3 +2092,7 @@ def get_printable_payslip(
     payroll_run = database.get(PayrollRun, item.payroll_run_id)
     structure = database.get(SalaryStructure, item.salary_structure_id)
     return item, payroll_run, structure, employee
+
+# payroll-advance-summary-v1
+
+# payroll-reference-layout-v1

@@ -20,3 +20,9 @@ application tables use a different metadata object.
 These steps are documented for reconstruction. A full migration rehearsal on a
 new PostgreSQL database has not been performed for this source publication.
 Do not run setup commands against a live database merely to browse this project.
+
+## Later workforce updates
+
+After mobile setup, apply SQL files in update_schemas/ in numeric order to a
+development database. These preserve installer schema additions outside Alembic.
+See [update notes](../../docs/UPDATES_2026_10_24.md).

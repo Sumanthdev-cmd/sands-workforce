@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -192,6 +192,7 @@ def list_my_notifications(
         Notification.organization_id == user.organization_id,
         Notification.recipient_user_id == user.id,
         Notification.channel == "IN_APP",
+        Notification.deleted_at.is_(None),
     )
 
     if unread_only:
@@ -215,6 +216,7 @@ def mark_read(
             Notification.organization_id == user.organization_id,
             Notification.recipient_user_id == user.id,
             Notification.channel == "IN_APP",
+        Notification.deleted_at.is_(None),
         )
     )
 
@@ -245,3 +247,18 @@ def list_executions(
             .limit(200)
         ).all()
     )
+
+
+def delete_read_notifications(database: Session, user: User) -> dict:
+    statement = update(Notification).where(
+        Notification.organization_id == user.organization_id,
+        Notification.recipient_user_id == user.id,
+        Notification.channel == "IN_APP",
+        Notification.read_at.is_not(None),
+        Notification.deleted_at.is_(None),
+    ).values(deleted_at=datetime.now(timezone.utc)).returning(Notification.id)
+    removed = list(database.scalars(statement))
+    database.commit()
+    return {"deleted_count": len(removed)}
+
+# attendance-notifications-cleanup-v1
